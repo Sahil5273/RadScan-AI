@@ -1,11 +1,15 @@
 'use client';
 
 import React from 'react';
-import { Activity, Cpu, Cloud, DollarSign, Award, Zap } from 'lucide-react';
+import { Activity, Cpu, Cloud, DollarSign, Award, HelpCircle } from 'lucide-react';
 
-export default function Header() {
+interface HeaderProps {
+  onOpenTour?: () => void;
+}
+
+export default function Header({ onOpenTour }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-50 border-b border-medical-border bg-medical-dark/95 backdrop-blur-md px-6 py-3.5">
+    <header className="sticky top-0 z-40 border-b border-medical-border bg-medical-dark/95 backdrop-blur-md px-6 py-3.5">
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         {/* Brand & Tagline */}
         <div className="flex items-center space-x-3">
@@ -23,10 +27,21 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Cloud Architecture & Credit Status */}
-        <div className="hidden md:flex items-center space-x-4 text-xs font-medium">
+        {/* Cloud Architecture, Credit Status & Help Tour */}
+        <div className="flex items-center space-x-3 text-xs font-medium">
+          {/* Guided Tour Button */}
+          {onOpenTour && (
+            <button
+              onClick={onOpenTour}
+              className="inline-flex items-center space-x-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-950 transition-all border border-cyan-400/30"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span>Take Guided Tour</span>
+            </button>
+          )}
+
           {/* GCP Status */}
-          <div className="flex items-center space-x-2 rounded-lg border border-slate-800 bg-medical-card px-3 py-1.5 text-slate-300">
+          <div className="hidden lg:flex items-center space-x-2 rounded-lg border border-slate-800 bg-medical-card px-3 py-1.5 text-slate-300">
             <Cloud className="h-4 w-4 text-blue-400" />
             <span>GCP Cloud Run</span>
             <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
@@ -34,21 +49,15 @@ export default function Header() {
           </div>
 
           {/* Vertex AI Gemini */}
-          <div className="flex items-center space-x-2 rounded-lg border border-slate-800 bg-medical-card px-3 py-1.5 text-slate-300">
+          <div className="hidden md:flex items-center space-x-2 rounded-lg border border-slate-800 bg-medical-card px-3 py-1.5 text-slate-300">
             <Cpu className="h-4 w-4 text-purple-400" />
             <span>Vertex AI Gemini 1.5 Pro</span>
           </div>
 
           {/* GCP Credit Ticker */}
-          <div className="flex items-center space-x-1.5 rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-1.5 text-amber-300">
+          <div className="hidden sm:flex items-center space-x-1.5 rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-1.5 text-amber-300">
             <DollarSign className="h-4 w-4 text-amber-400" />
             <span>Credits: <strong className="text-amber-200">$218.50</strong> / $250</span>
-          </div>
-
-          {/* Hackathon Entry Badge */}
-          <div className="flex items-center space-x-1.5 rounded-lg border border-cyan-800/60 bg-cyan-950/40 px-3 py-1.5 text-cyan-300">
-            <Award className="h-4 w-4 text-cyan-400" />
-            <span>XPRIZE & Agentic Hackathon</span>
           </div>
         </div>
       </div>

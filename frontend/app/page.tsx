@@ -6,6 +6,7 @@ import SampleSelector from '@/components/SampleSelector';
 import MriViewer from '@/components/MriViewer';
 import PathologyBreakdown from '@/components/PathologyBreakdown';
 import ReportGenerator from '@/components/ReportGenerator';
+import InteractiveTour from '@/components/InteractiveTour';
 
 export default function Home() {
   const [activeSampleId, setActiveSampleId] = useState<string>('sample-acl-tear');
@@ -13,9 +14,10 @@ export default function Home() {
   const [reportData, setReportData] = useState<any>(null);
   const [isLoadingPredict, setIsLoadingPredict] = useState<boolean>(false);
   const [isLoadingReport, setIsLoadingReport] = useState<boolean>(false);
+  const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
 
   // Fetch prediction data when sample changes
-  const fetchPrediction = async (sampleId: str) => {
+  const fetchPrediction = async (sampleId: string) => {
     setIsLoadingPredict(true);
     try {
       const formData = new FormData();
@@ -98,7 +100,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-medical-dark flex flex-col font-sans">
-      <Header />
+      <Header onOpenTour={() => setIsTourOpen(true)} />
+
+      {/* Guided Tour Modal Component */}
+      <InteractiveTour
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
+      />
 
       <main className="flex-1 mx-auto max-w-7xl w-full p-4 sm:p-6 space-y-6">
         {/* 1-Click Judge Sample Selector */}
