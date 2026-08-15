@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #0a0d14;
+  --foreground: #e2e8f0;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom DICOM Grid Overlay */
+.dicom-grid-overlay {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Pulse animation for active GCP badge */
+@keyframes pulse-cyan {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(0, 242, 254, 0.8);
+  }
+}
+
+.glow-cyan {
+  animation: pulse-cyan 3s infinite ease-in-out;
+}
+
+/* Custom styled range slider */
+input[type=range] {
+  accent-color: #00d2ff;
+}
