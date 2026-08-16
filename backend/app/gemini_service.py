@@ -44,12 +44,13 @@ class GeminiReportGenerator:
         """
         primary_diag = diagnosis_data.get("primary_diagnosis", "Normal Joint")
         pathologies = diagnosis_data.get("pathologies", {})
-        patient_info = diagnosis_data.get("patient_info", {
+        raw_patient_info = diagnosis_data.get("patient_info")
+        patient_info = raw_patient_info if isinstance(raw_patient_info, dict) else {
             "age": 30,
             "gender": "Patient",
             "mri_type": "Knee Volumetric MRI (Sagittal T2 FS / Coronal PD)",
             "study_description": "Right Knee MRI Evaluation"
-        })
+        }
 
         # High probability targets
         high_prob_targets = [f"{k}: {int(v * 100)}%" for k, v in pathologies.items() if v >= 0.35 and k != "Normal Joint"]

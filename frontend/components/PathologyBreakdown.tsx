@@ -1,92 +1,156 @@
 'use client';
 
 import React from 'react';
-import { BarChart3, AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 
 interface PathologyBreakdownProps {
   pathologies: Record<string, number>;
   primaryDiagnosis: string;
+  findingsSummary?: string;
+  modelVersion?: string;
 }
+
+type Classification = 'positive' | 'indeterminate' | 'negative';
+
+const POSITIVE_THRESHOLD = 0.7;
+const INDETERMINATE_THRESHOLD = 0.35;
+
+function classify(probability: number): Classification {
+  if (probability >= POSITIVE_THRESHOLD) return 'positive';
+  if (probability >= INDETERMINATE_THRESHOLD) return 'indeterminate';
+  return 'negative';
+}
+
+const GROUPS: { key: Classification; title: string; chip: string; bar: string }[] = [
+  { key: 'positive', title: 'Positive', chip: 'chip chip-critical', bar: 'bg-severity-critical' },
+  {
+    key: 'indeterminate',
+    title: 'Indeterminate',
+    chip: 'chip chip-moderate',
+    bar: 'bg-severity-moderate',
+  },
+  { key: 'negative', title: 'Negative', chip: 'chip chip-normal', bar: 'bg-slate-300' },
+];
 
 export default function PathologyBreakdown({
   pathologies,
-  primaryDiagnosis
+  primaryDiagnosis,
+  findingsSummary,
+  modelVersion,
 }: PathologyBreakdownProps) {
-  // Sort pathologies by probability descending
-  const sortedPathologies = Object.entries(pathologies).sort((a, b) => b[1] - a[1]);
+  const entries = Object.entries(pathologies).sort((a, b) => b[1] - a[1]);
+  const isNormal = primaryDiagnosis.toLowerCase().includes('normal');
+  const positiveCount = entries.filter(([, value]) => classify(value) === 'positive').length;
 
   return (
-    <div className="rounded-xl border border-medical-border bg-medical-card p-4 shadow-xl flex flex-col h-full">
-      {/* Header & Primary Diagnosis */}
-      <div className="border-b border-slate-800 pb-3 mb-3">
-        <div className="flex items-center space-x-2">
-          <BarChart3 className="h-5 w-5 text-cyan-400" />
-          <h3 className="text-sm font-semibold text-white">2.5D CNN-BiGRU 12-Target Risk Breakdown</h3>
-        </div>
-        <p className="text-xs text-slate-400 mt-0.5">
-          Real-time probability distribution across 12 knee pathology targets.
-        </p>
+    <section className="panel flex h-full flex-col">
+      <div className="panel-header">
+        <h2 className="panel-title">AI Analysis</h2>
+        <span className="text-[11px] text-slate-500">{entries.length} targets evaluated</span>
+      </div>
 
-        {/* Primary Diagnosis Callout */}
-        <div className="mt-3 rounded-lg border border-cyan-800/80 bg-cyan-950/40 p-3">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-cyan-400">Primary AI Triage Conclusion</div>
-          <div className="text-sm font-bold text-white mt-0.5 flex items-center space-x-2">
-            {primaryDiagnosis.includes('Normal') ? (
-              <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
-            ) : (
-              <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
-            )}
-            <span>{primaryDiagnosis}</span>
+      {/* Primary conclusion */}
+      <div
+        className={`border-b px-3 py-3 ${
+          isNormal ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'
+        }`}
+      >
+        <div className="field-label">Primary AI conclusion</div>
+        <div className="mt-1 flex items-start gap-2">
+          {isNormal ? (
+            <CheckCircle2 className="mt-px h-4 w-4 shrink-0 text-severity-normal" />
+          ) : (
+            <AlertTriangle className="mt-px h-4 w-4 shrink-0 text-severity-critical" />
+          )}
+          <div className="min-w-0">
+            <div
+              className={`text-sm font-semibold leading-snug ${
+                isNormal ? 'text-emerald-900' : 'text-red-900'
+              }`}
+            >
+              {primaryDiagnosis}
+            </div>
+            <div className="mt-0.5 text-[11px] text-slate-600">
+              {positiveCount > 0
+                ? `${positiveCount} target${positiveCount > 1 ? 's' : ''} above the ${Math.round(
+                    POSITIVE_THRESHOLD * 100,
+                  )}% operating threshold`
+                : 'No target exceeded the positive operating threshold'}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Pathology Target Probability Bars */}
-      <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 max-h-[380px]">
-        {sortedPathologies.map(([target, prob]) => {
-          const percent = Math.round(prob * 100);
-          
-          let barColor = 'bg-emerald-500';
-          let textColor = 'text-emerald-400';
-          let badgeText = 'Low Risk';
+      {findingsSummary && (
+        <div className="border-b border-surface-border bg-white px-3 py-2.5">
+          <div className="field-label mb-1">Narrative summary</div>
+          <p className="text-xs leading-relaxed text-slate-700">{findingsSummary}</p>
+        </div>
+      )}
 
-          if (percent >= 70) {
-            barColor = 'bg-rose-500';
-            textColor = 'text-rose-400';
-            badgeText = 'High Risk';
-          } else if (percent >= 35) {
-            barColor = 'bg-amber-500';
-            textColor = 'text-amber-400';
-            badgeText = 'Moderate';
-          }
+      {/* Grouped probability table */}
+      <div className="flex-1 overflow-y-auto">
+        {entries.length === 0 && (
+          <div className="px-3 py-8 text-center text-xs text-slate-500">
+            Select a study from the worklist to run analysis.
+          </div>
+        )}
+
+        {GROUPS.map((group) => {
+          const rows = entries.filter(([, value]) => classify(value) === group.key);
+          if (rows.length === 0) return null;
 
           return (
-            <div key={target} className="rounded-lg bg-medical-dark/60 p-2.5 border border-slate-800/80">
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span className="font-medium text-slate-200">{target}</span>
-                <div className="flex items-center space-x-2">
-                  <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded ${
-                    percent >= 70 ? 'bg-rose-950 text-rose-300 border border-rose-800' :
-                    percent >= 35 ? 'bg-amber-950 text-amber-300 border border-amber-800' :
-                    'bg-slate-800 text-slate-400'
-                  }`}>
-                    {badgeText}
-                  </span>
-                  <span className={`font-mono font-bold ${textColor}`}>{percent}%</span>
-                </div>
+            <div key={group.key}>
+              <div className="sticky top-0 z-10 flex items-center justify-between border-y border-surface-border bg-surface-muted px-3 py-1.5">
+                <span className="field-label">{group.title}</span>
+                <span className="data-mono text-[11px] text-slate-500">{rows.length}</span>
               </div>
 
-              {/* Progress Bar Container */}
-              <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${barColor} transition-all duration-500 rounded-full`}
-                  style={{ width: `${percent}%` }}
-                ></div>
-              </div>
+              <ul>
+                {rows.map(([target, probability]) => {
+                  const percent = Math.round(probability * 100);
+                  return (
+                    <li
+                      key={target}
+                      className="border-b border-surface-border px-3 py-2 last:border-b-0"
+                    >
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="truncate text-xs font-medium text-slate-800" title={target}>
+                          {target}
+                        </span>
+                        <span className="data-mono shrink-0 text-xs font-bold text-slate-900">
+                          {percent}%
+                        </span>
+                      </div>
+                      <div className="relative mt-1.5 h-1.5 w-full overflow-hidden rounded-sm bg-slate-100">
+                        <div
+                          className={`h-full rounded-sm ${group.bar} transition-[width] duration-500`}
+                          style={{ width: `${percent}%` }}
+                        />
+                        {/* Operating threshold marker */}
+                        <span
+                          className="absolute top-0 h-full w-px bg-slate-400/70"
+                          style={{ left: `${POSITIVE_THRESHOLD * 100}%` }}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           );
         })}
       </div>
-    </div>
+
+      <div className="flex items-start gap-1.5 border-t border-surface-border bg-surface-muted px-3 py-2 text-[11px] leading-snug text-slate-500">
+        <Info className="mt-px h-3.5 w-3.5 shrink-0" />
+        <span>
+          Probabilities are decision support output{modelVersion ? ` from model ${modelVersion}` : ''} and
+          do not constitute a diagnosis. Vertical marker denotes the {Math.round(POSITIVE_THRESHOLD * 100)}%
+          operating threshold.
+        </span>
+      </div>
+    </section>
   );
 }

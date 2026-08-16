@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
+import PatientBanner from '@/components/PatientBanner';
 import SampleSelector from '@/components/SampleSelector';
 import MriViewer from '@/components/MriViewer';
 import PathologyBreakdown from '@/components/PathologyBreakdown';
@@ -99,17 +100,19 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-medical-dark flex flex-col font-sans">
+    <div className="flex min-h-screen flex-col">
       <Header onOpenTour={() => setIsTourOpen(true)} />
 
-      {/* Guided Tour Modal Component */}
-      <InteractiveTour
-        isOpen={isTourOpen}
-        onClose={() => setIsTourOpen(false)}
-      />
+      <InteractiveTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
 
-      <main className="flex-1 mx-auto max-w-7xl w-full p-4 sm:p-6 space-y-6">
-        {/* 1-Click Judge Sample Selector */}
+      <main className="mx-auto w-full max-w-[1680px] flex-1 space-y-3 p-3 sm:p-4">
+        <PatientBanner
+          sampleId={activeSampleId}
+          patientInfo={predictionData?.patient_info || null}
+          primaryDiagnosis={predictionData?.primary_diagnosis || ''}
+          isLoading={isLoadingPredict}
+        />
+
         <SampleSelector
           activeSampleId={activeSampleId}
           onSelectSample={(id) => {
@@ -120,28 +123,27 @@ export default function Home() {
           isLoading={isLoadingPredict}
         />
 
-        {/* Main 2-Column Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column: Multi-Planar MRI Viewer */}
-          <div className="lg:col-span-7">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-12">
+          <div className="xl:col-span-8">
             <MriViewer
               sampleId={activeSampleId}
               gradcam={predictionData?.gradcam || null}
               sliceCount={predictionData?.slice_count || 24}
               keySliceIndex={predictionData?.key_slice_index || 12}
+              studyDescription={predictionData?.patient_info?.study_description}
             />
           </div>
 
-          {/* Right Column: 12-Target Risk Breakdown */}
-          <div className="lg:col-span-5">
+          <div className="xl:col-span-4">
             <PathologyBreakdown
               pathologies={predictionData?.pathologies || {}}
-              primaryDiagnosis={predictionData?.primary_diagnosis || 'Evaluating...'}
+              primaryDiagnosis={predictionData?.primary_diagnosis || 'Awaiting analysis'}
+              findingsSummary={predictionData?.findings_summary}
+              modelVersion={predictionData?.model_version}
             />
           </div>
         </div>
 
-        {/* Full-Width Bottom Section: Gemini Report Generator */}
         <ReportGenerator
           report={reportData}
           onGenerateReport={() => fetchReport()}
@@ -149,9 +151,23 @@ export default function Home() {
         />
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800 bg-medical-dark/90 py-4 px-6 text-center text-xs text-slate-500">
-        RadScan AI • Powered by Google Cloud Platform (Cloud Run L4 GPU & Vertex AI Gemini 1.5 Pro) • Hackathon Showcase Build
+      <footer className="border-t border-surface-border bg-white px-4 py-4 sm:px-6">
+        <div className="mx-auto flex max-w-[1680px] flex-col gap-2 text-[11px] leading-relaxed text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <p className="max-w-3xl">
+            <strong className="font-semibold text-slate-700">
+              Investigational decision support.
+            </strong>{' '}
+            RadScan AI is intended to assist qualified radiologists and is not cleared for primary
+            diagnosis. All outputs require clinical correlation and radiologist attestation.
+          </p>
+          <div className="flex shrink-0 items-center gap-3">
+            <span>DICOM de-identified</span>
+            <span className="text-surface-strong">|</span>
+            <span>Access logged for audit</span>
+            <span className="text-surface-strong">|</span>
+            <span>v2.5</span>
+          </div>
+        </div>
       </footer>
     </div>
   );

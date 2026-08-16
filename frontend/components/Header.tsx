@@ -1,66 +1,107 @@
 'use client';
 
 import React from 'react';
-import { Activity, Cpu, Cloud, DollarSign, Award, HelpCircle } from 'lucide-react';
+import {
+  Activity,
+  ClipboardList,
+  FileText,
+  HelpCircle,
+  LayoutGrid,
+  Lock,
+  Monitor,
+  Settings,
+} from 'lucide-react';
 
 interface HeaderProps {
   onOpenTour?: () => void;
 }
 
+const MODULES = [
+  { label: 'Worklist', icon: ClipboardList, active: false },
+  { label: 'Image Review', icon: Monitor, active: true },
+  { label: 'Reporting', icon: FileText, active: false },
+  { label: 'Quality & Audit', icon: LayoutGrid, active: false },
+];
+
 export default function Header({ onOpenTour }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-40 border-b border-medical-border bg-medical-dark/95 backdrop-blur-md px-6 py-3.5">
-      <div className="mx-auto flex max-w-7xl items-center justify-between">
-        {/* Brand & Tagline */}
-        <div className="flex items-center space-x-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-500 shadow-lg shadow-cyan-500/20 glow-cyan">
-            <Activity className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-xl font-bold tracking-tight text-white">RadScan<span className="text-medical-accent">.AI</span></h1>
-              <span className="rounded-full bg-cyan-950 px-2 py-0.5 text-xs font-semibold text-cyan-400 border border-cyan-800/50">
-                v2.5 Volumetric
-              </span>
+    <header className="sticky top-0 z-40">
+      {/* Institutional identity bar */}
+      <div className="bg-clinical-900 px-4 text-white sm:px-6">
+        <div className="mx-auto flex h-14 max-w-[1680px] items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded bg-white/10 ring-1 ring-inset ring-white/20">
+              <Activity className="h-5 w-5" strokeWidth={2.25} />
             </div>
-            <p className="text-xs text-slate-400">AI Radiology Triage & Multimodal MRI Report Copilot</p>
+            <div className="leading-tight">
+              <div className="flex items-center gap-2">
+                <span className="text-base font-semibold tracking-tight">RadScan AI</span>
+                <span className="hidden rounded-sm bg-white/10 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wider text-clinical-100 sm:inline">
+                  MSK MRI
+                </span>
+              </div>
+              <div className="hidden text-[11px] text-clinical-200 sm:block">
+                Department of Radiology · Clinical Decision Support
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Cloud Architecture, Credit Status & Help Tour */}
-        <div className="flex items-center space-x-3 text-xs font-medium">
-          {/* Guided Tour Button */}
-          {onOpenTour && (
-            <button
-              onClick={onOpenTour}
-              className="inline-flex items-center space-x-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-950 transition-all border border-cyan-400/30"
-            >
-              <HelpCircle className="h-4 w-4" />
-              <span>Take Guided Tour</span>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="hidden items-center gap-1.5 rounded border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-medium text-clinical-100 lg:flex">
+              <Lock className="h-3.5 w-3.5" />
+              De-identified session
+            </div>
+
+            <div className="hidden items-center gap-1.5 rounded border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-medium text-clinical-100 xl:flex">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              Inference service online
+            </div>
+
+            {onOpenTour && (
+              <button
+                onClick={onOpenTour}
+                className="inline-flex items-center gap-1.5 rounded border border-white/20 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/10"
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">Help</span>
+              </button>
+            )}
+
+            <button className="hidden rounded border border-white/20 p-1.5 text-white transition-colors hover:bg-white/10 sm:inline-flex">
+              <Settings className="h-4 w-4" />
             </button>
-          )}
 
-          {/* GCP Status */}
-          <div className="hidden lg:flex items-center space-x-2 rounded-lg border border-slate-800 bg-medical-card px-3 py-1.5 text-slate-300">
-            <Cloud className="h-4 w-4 text-blue-400" />
-            <span>GCP Cloud Run</span>
-            <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
-            <span className="text-emerald-400 font-semibold">L4 GPU Ready</span>
-          </div>
-
-          {/* Vertex AI Gemini */}
-          <div className="hidden md:flex items-center space-x-2 rounded-lg border border-slate-800 bg-medical-card px-3 py-1.5 text-slate-300">
-            <Cpu className="h-4 w-4 text-purple-400" />
-            <span>Vertex AI Gemini 1.5 Pro</span>
-          </div>
-
-          {/* GCP Credit Ticker */}
-          <div className="hidden sm:flex items-center space-x-1.5 rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-1.5 text-amber-300">
-            <DollarSign className="h-4 w-4 text-amber-400" />
-            <span>Credits: <strong className="text-amber-200">$218.50</strong> / $250</span>
+            <div className="flex items-center gap-2 border-l border-white/15 pl-2 sm:pl-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-clinical-400 text-xs font-bold text-clinical-900">
+                AS
+              </div>
+              <div className="hidden leading-tight md:block">
+                <div className="text-xs font-semibold">Dr. A. Sharma, MD</div>
+                <div className="text-[11px] text-clinical-200">Musculoskeletal Radiology</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Module navigation */}
+      <nav className="border-b border-surface-border bg-white px-4 sm:px-6">
+        <div className="mx-auto flex max-w-[1680px] items-center gap-1 overflow-x-auto">
+          {MODULES.map(({ label, icon: Icon, active }) => (
+            <button
+              key={label}
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-xs font-semibold transition-colors ${
+                active
+                  ? 'border-clinical-600 text-clinical-700'
+                  : 'border-transparent text-slate-500 hover:border-surface-strong hover:text-slate-700'
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </nav>
     </header>
   );
 }

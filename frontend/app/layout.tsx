@@ -2,8 +2,9 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'RadScan AI - Volumetric Radiology Copilot & Diagnostic Triage',
-  description: 'Multimodal AI Radiology Copilot powered by 2.5D Volumetric CNN-BiGRU (819k DICOM trained), Grad-CAM heatmaps, and Vertex AI Gemini 1.5 Pro.',
+  title: 'RadScan AI | Musculoskeletal MRI Decision Support',
+  description:
+    'Clinical decision support for knee MRI review: multi-planar viewing, AI pathology probabilities with Grad-CAM localisation, and structured radiology reporting.',
 }
 
 export default function RootLayout({
@@ -12,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen bg-medical-dark text-slate-100 antialiased">
+    <html lang="en">
+      <body className="min-h-screen bg-surface-canvas text-slate-900 antialiased">
         {children}
       </body>
     </html>
