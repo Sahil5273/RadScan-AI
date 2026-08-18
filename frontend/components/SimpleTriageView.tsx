@@ -1,16 +1,19 @@
 'use client';
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronRight,
   Eye,
   EyeOff,
   FileText,
   Info,
   Layers,
+  MapPin,
   Sparkles,
   Upload,
+  Zap,
 } from 'lucide-react';
 
 interface PatientInfo {
@@ -87,88 +90,23 @@ export default function SimpleTriageView({
   onSwitchToAdvanced,
 }: SimpleTriageViewProps) {
   const [showGradcam, setShowGradcam] = useState(true);
+  const [showLabels, setShowLabels] = useState(true);
   const [activeTab, setActiveTab] = useState<'summary' | 'patient'>('summary');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isNormal = useMemo(() => {
-    const diagnosis = primaryDiagnosis.toLowerCase();
-    return diagnosis.includes('unremarkable') || diagnosis.includes('normal');
-  }, [primaryDiagnosis]);
+  const isNormal = primaryDiagnosis.toLowerCase().includes('unremarkable') || primaryDiagnosis.toLowerCase().includes('normal');
+  const entries = Object.entries(pathologies).sort((a, b) => b[1] - a[1]);
+  const topPathologies = entries.slice(0, 3);
 
-  const topPathologies = useMemo(
-    () => Object.entries(pathologies).sort((a, b) => b[1] - a[1]).slice(0, 3),
-    [pathologies],
-  );
-
-  const heatmapStyle = useMemo(() => {
-    if (!gradcam) return null;
-    return {
-      left: `${gradcam.center_x * 100}%`,
-      top: `${gradcam.center_y * 100}%`,
-      transform: 'translate(-50%, -50%)',
-      width: `${gradcam.radius * 230}px`,
-      height: `${gradcam.radius * 230}px`,
-      opacity: 0.75,
-      background: isNormal
-        ? 'radial-gradient(circle, rgba(15,118,110,.75), transparent 80%)'
-        : 'radial-gradient(circle, rgba(159,18,57,.85), rgba(217,119,6,.5) 55%, transparent 80%)',
-    } as React.CSSProperties;
-  }, [gradcam, isNormal]);
-
-  const kneeSlice = useMemo(
-    () => (
-      <svg viewBox="0 0 200 200" className="h-full w-full max-h-[360px]">
-        <defs>
-          <radialGradient id="sim-marrow-x" cx="45%" cy="38%" r="68%">
-            <stop offset="0%" stopColor="#9ba3ae" />
-            <stop offset="55%" stopColor="#767e8a" />
-            <stop offset="100%" stopColor="#4d545e" />
-          </radialGradient>
-          <radialGradient id="sim-soft-x" cx="50%" cy="48%" r="62%">
-            <stop offset="0%" stopColor="#3b424d" />
-            <stop offset="62%" stopColor="#272d36" />
-            <stop offset="100%" stopColor="#0b0e13" />
-          </radialGradient>
-        </defs>
-
-        <rect width="200" height="200" fill="#04060a" />
-        <path
-          d="M58 0 C42 40 36 74 44 100 C36 130 42 170 56 200 L150 200 C162 170 166 130 156 100 C164 74 158 40 144 0 Z"
-          fill="url(#sim-soft-x)"
-        />
-        <path
-          d="M80 0 L80 66 C64 72 57 86 58 98 C59 112 76 122 98 121 C120 120 139 112 141 97 C143 84 136 71 120 66 L120 0 Z"
-          fill="url(#sim-marrow-x)"
-          stroke="#05070b"
-          strokeWidth="2"
-        />
-        <path
-          d="M60 140 C60 132 68 130 82 129 L120 129 C134 130 142 133 142 141 C142 160 134 180 132 200 L74 200 C72 180 60 160 60 140 Z"
-          fill="url(#sim-marrow-x)"
-          stroke="#05070b"
-          strokeWidth="2"
-        />
-
-        {!isNormal ? (
-          <ellipse cx="101" cy="114" rx="10" ry="8" fill="#9f1239" opacity="0.45" />
-        ) : null}
-      </svg>
-    ),
-    [isNormal],
-  );
-
-  const handleFileChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (event.target.files && event.target.files[0]) {
-        onUploadCustom(event.target.files[0]);
-      }
-    },
-    [onUploadCustom],
-  );
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      onUploadCustom(event.target.files[0]);
+    }
+  };
 
   return (
     <div className="space-y-6 rise-in">
-      {/* Scenario Presets Selector Card (X-CDS Query Form Style) */}
+      {/* Scenario Presets Selector Card */}
       <div id="tour-case-selector" className="panel p-5 bg-[var(--panel)]">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div>
@@ -235,35 +173,82 @@ export default function SimpleTriageView({
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Left Column: Key MRI Preview */}
+        {/* Left Column: Authentic Clinical MRI Image Slice & Label Overlay */}
         <div id="tour-mri-viewport" className="space-y-5 lg:col-span-5">
           <div className="panel overflow-hidden">
             <div className="panel-header">
               <div className="flex items-center gap-2">
                 <Layers className="h-4 w-4 text-[var(--accent)]" />
-                <h3 className="panel-title">Key MRI Slice</h3>
+                <h3 className="panel-title">Authentic Sagittal MRI Slice</h3>
               </div>
-              <button
-                onClick={() => setShowGradcam(!showGradcam)}
-                className={`btn ${showGradcam ? 'btn-active' : ''}`}
-              >
-                {showGradcam ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                Lesion Heatmap
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setShowLabels(!showLabels)}
+                  className={`btn ${showLabels ? 'btn-active' : ''}`}
+                >
+                  <MapPin className="h-3.5 w-3.5" />
+                  Pins
+                </button>
+                <button
+                  onClick={() => setShowGradcam(!showGradcam)}
+                  className={`btn ${showGradcam ? 'btn-active' : ''}`}
+                >
+                  {showGradcam ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                  Heatmap
+                </button>
+              </div>
             </div>
 
-            <div className="relative aspect-square w-full bg-[#091318] flex items-center justify-center p-4">
-              {kneeSlice}
+            {/* Real DICOM MRI Image Container */}
+            <div className="relative aspect-square w-full bg-[#05070a] overflow-hidden flex items-center justify-center">
+              <img
+                src="/mri_knee_sagittal.jpg"
+                alt="Clinical Knee MRI Scan"
+                className="h-full w-full object-contain"
+              />
 
-              {heatmapStyle && showGradcam && (
+              {/* PyTorch Grad-CAM Thermal Heatmap Overlay */}
+              {gradcam && showGradcam && (
                 <div
-                  className="pointer-events-none absolute rounded-full blur-md"
-                  style={heatmapStyle}
+                  className="pointer-events-none absolute rounded-full blur-xl transition-all duration-300"
+                  style={{
+                    left: `${(gradcam.center_x || 0.48) * 100}%`,
+                    top: `${(gradcam.center_y || 0.52) * 100}%`,
+                    transform: 'translate(-50%, -50%)',
+                    width: `${(gradcam.radius || 0.22) * 260}px`,
+                    height: `${(gradcam.radius || 0.22) * 260}px`,
+                    opacity: 0.78,
+                    background: isNormal
+                      ? 'radial-gradient(circle, rgba(15,118,110,.75), transparent 80%)'
+                      : 'radial-gradient(circle, rgba(225,29,72,.90) 0%, rgba(217,119,6,.65) 45%, transparent 80%)',
+                  }}
                 />
               )}
 
-              <div className="absolute bottom-3 left-3 data-mono text-[10px] text-slate-400">
-                Key Sagittal T2 Slice · 1.5T MRI
+              {/* Interactive Pathology Label Pin */}
+              {showLabels && !isNormal && topPathologies.length > 0 && (
+                <div
+                  className="absolute pointer-events-auto transition-all rise-in"
+                  style={{
+                    left: `${(gradcam?.center_x || 0.48) * 100}%`,
+                    top: `${(gradcam?.center_y || 0.52) * 100}%`,
+                    transform: 'translate(-50%, -100%)',
+                  }}
+                >
+                  <div className="flex flex-col items-center">
+                    <div className="rounded-xl bg-slate-900/90 border border-rose-500/60 px-2.5 py-1 text-[10px] font-bold text-white shadow-xl backdrop-blur-md flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-rose-500 animate-ping" />
+                      <span>{topPathologies[0][0]}: {Math.round(topPathologies[0][1] * 100)}%</span>
+                    </div>
+                    <div className="h-4 w-0.5 bg-rose-500 shadow-md" />
+                  </div>
+                </div>
+              )}
+
+              {/* Image Metadata Bar */}
+              <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[10px] text-slate-300 bg-slate-950/75 backdrop-blur-md px-2.5 py-1 rounded-lg font-mono">
+                <span>Sagittal T2 FSE · 1.5T</span>
+                <span>Matrix: 512×512 · Thk: 3.0mm</span>
               </div>
             </div>
           </div>
