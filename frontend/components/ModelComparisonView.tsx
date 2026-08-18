@@ -29,79 +29,79 @@ interface ModelMeta {
   cons: string[];
   label_performance: Record<
     string,
-    { auc: number; sensitivity: number; specificity: number; tier: string }
+    { auc: number; sensitivity: number; specificity: number; accuracy: number; tier: string }
   >;
 }
 
 const DEFAULT_MODELS: ModelMeta[] = [
   {
-    id: 'model-2.5d-bigru',
-    name: '2.5D Volumetric CNN-BiGRU',
-    short_name: '2.5D CNN-BiGRU',
-    architecture: 'ResNet-50 + Bidirectional GRU (2.5D Stack)',
-    latency_ms: 18,
-    gpu_memory: '2.1 GB',
-    training_dataset: 'Kaggle / Stanford MRNet Benchmark (1,250 Knee MRI Volumes)',
-    best_for: 'Acute ligament tears (ACL/MCL/LCL) and rapid ER triage',
-    overall_auc: 0.784,
+    id: 'phase1-sagittal-resnet18',
+    name: 'Phase 1: 1-Plane (Sagittal) ResNet-18 + BiGRU',
+    short_name: 'Phase 1 (Sagittal)',
+    architecture: '2D ResNet-18 + BiGRU (Temporal Max-Pooling)',
+    latency_ms: 14,
+    gpu_memory: '1.8 GB',
+    training_dataset: 'RSNA Knee MRI Dataset (224x224x24 Slices)',
+    best_for: 'Cruciate ligament tears (ACL 0.885 AUC) & Baker cysts (0.949 AUC)',
+    overall_auc: 0.7488,
     kaggle_score: 0.784,
     pros: [
-      'Extremely low latency (~18ms inference per scan)',
-      'Superior cross-slice temporal sequence continuity for ACL/PCL tears',
-      'Lightweight memory footprint on edge and cloud containers',
+      'Highest solo Kaggle Public Leaderboard score (0.784 LB)',
+      'Sagittal view dominates cruciate ligament & meniscal tearing patterns',
+      'Lightweight single-plane inference (~14ms per scan)',
     ],
     cons: [
-      'Lower performance on subtle focal cartilage lesions (0.68 AUC)',
-      'Requires ordered sagittal/coronal slice stack inputs',
+      'Lower accuracy on collateral ligaments (MCL 0.583 AUC)',
+      'Limited view for multi-planar coronal fracture alignment',
     ],
     label_performance: {
-      'ACL Tear': { auc: 0.892, sensitivity: 0.86, specificity: 0.91, tier: 'superior' },
-      'Medial Meniscus Tear': { auc: 0.814, sensitivity: 0.78, specificity: 0.84, tier: 'strong' },
-      'Lateral Meniscus Tear': { auc: 0.775, sensitivity: 0.73, specificity: 0.81, tier: 'moderate' },
-      'Joint Effusion': { auc: 0.820, sensitivity: 0.79, specificity: 0.84, tier: 'strong' },
-      'Bone Marrow Edema': { auc: 0.742, sensitivity: 0.71, specificity: 0.77, tier: 'moderate' },
-      'PCL Tear': { auc: 0.875, sensitivity: 0.83, specificity: 0.90, tier: 'superior' },
-      'MCL Injury': { auc: 0.798, sensitivity: 0.75, specificity: 0.83, tier: 'strong' },
-      'LCL Injury': { auc: 0.765, sensitivity: 0.72, specificity: 0.80, tier: 'moderate' },
-      'Cartilage Lesion': { auc: 0.682, sensitivity: 0.63, specificity: 0.72, tier: 'challenging' },
-      'Patellar Tendinopathy': { auc: 0.715, sensitivity: 0.67, specificity: 0.75, tier: 'challenging' },
-      'Baker Cyst': { auc: 0.770, sensitivity: 0.73, specificity: 0.80, tier: 'moderate' },
-      'Normal Joint': { auc: 0.885, sensitivity: 0.85, specificity: 0.90, tier: 'superior' },
+      'ACL Tear': { auc: 0.885, sensitivity: 0.792, specificity: 0.971, accuracy: 0.897, tier: 'superior' },
+      'MCL Injury': { auc: 0.583, sensitivity: 0.444, specificity: 0.898, accuracy: 0.828, tier: 'challenging' },
+      'Medial Meniscus Tear': { auc: 0.665, sensitivity: 0.846, specificity: 0.469, accuracy: 0.638, tier: 'moderate' },
+      'Lateral Meniscus Tear': { auc: 0.647, sensitivity: 1.000, specificity: 0.371, accuracy: 0.621, tier: 'moderate' },
+      'Medial OA': { auc: 0.905, sensitivity: 0.867, specificity: 0.884, accuracy: 0.879, tier: 'superior' },
+      'Lateral OA': { auc: 0.729, sensitivity: 0.636, specificity: 0.872, accuracy: 0.828, tier: 'strong' },
+      'Patellofemoral OA': { auc: 0.741, sensitivity: 0.524, specificity: 0.919, accuracy: 0.776, tier: 'strong' },
+      'Joint Effusion': { auc: 0.841, sensitivity: 0.829, specificity: 0.783, accuracy: 0.810, tier: 'superior' },
+      'Synovitis': { auc: 0.711, sensitivity: 0.778, specificity: 0.613, accuracy: 0.690, tier: 'moderate' },
+      'Baker Cyst': { auc: 0.949, sensitivity: 1.000, specificity: 0.761, accuracy: 0.810, tier: 'superior' },
+      'Bone Contusion': { auc: 0.764, sensitivity: 0.632, specificity: 0.872, accuracy: 0.793, tier: 'strong' },
+      'Fracture': { auc: 0.565, sensitivity: 0.444, specificity: 0.750, accuracy: 0.655, tier: 'challenging' },
     },
   },
   {
-    id: 'model-3d-swin',
-    name: '3D SwinUNETR Vision Transformer',
-    short_name: '3D Swin-Transformer',
-    architecture: '3D Swin Transformer + Feature Pyramid Network',
-    latency_ms: 62,
-    gpu_memory: '5.4 GB',
-    training_dataset: 'Kaggle / Stanford MRNet Benchmark (1,250 Knee MRI Volumes)',
-    best_for: 'Subtle bone marrow edema, joint effusion, and articular cartilage lesions',
-    overall_auc: 0.798,
-    kaggle_score: 0.798,
+    id: 'phase4-3plane-resnet18',
+    name: 'Phase 4: 3-Plane (Sag + Cor + Ax) ResNet-18 + BiGRU',
+    short_name: 'Phase 4 (3-Plane Fusion)',
+    architecture: '3-Plane Concatenation (Sag+Cor+Ax) + BiGRU (1536 Features)',
+    latency_ms: 42,
+    gpu_memory: '4.2 GB',
+    training_dataset: 'RSNA Knee MRI Dataset (224x224x32 Extended Slices)',
+    best_for: 'Highest Gold Validation AUC (0.7699) & Meniscal / Fracture multi-plane alignment',
+    overall_auc: 0.7699,
+    kaggle_score: 0.782,
     pros: [
-      'Full 3D spatial self-attention captures micro-fractures & marrow edema',
-      'Higher sensitivity for focal cartilage degradation (0.74 AUC vs 0.68 AUC)',
-      'Robust across non-standard slice thickness variations (2.0mm - 5.0mm)',
+      'Highest Gold Human-Annotated Validation AUC (0.7699 Gold Val N=58)',
+      'Multi-plane fusion improves Medial Meniscus (0.786 AUC) & Lateral OA (0.845 AUC)',
+      'Robust cross-plane spatial alignment across Sagittal, Coronal & Axial views',
     ],
     cons: [
-      'Higher computational latency (~62ms vs ~18ms)',
-      'Larger GPU VRAM requirements during batch inference',
+      'Higher inference latency (~42ms) due to 3-plane feature extraction',
+      'Requires simultaneous multi-planar series availability',
     ],
     label_performance: {
-      'ACL Tear': { auc: 0.878, sensitivity: 0.84, specificity: 0.90, tier: 'strong' },
-      'Medial Meniscus Tear': { auc: 0.808, sensitivity: 0.77, specificity: 0.83, tier: 'strong' },
-      'Lateral Meniscus Tear': { auc: 0.782, sensitivity: 0.74, specificity: 0.81, tier: 'moderate' },
-      'Joint Effusion': { auc: 0.854, sensitivity: 0.82, specificity: 0.87, tier: 'superior' },
-      'Bone Marrow Edema': { auc: 0.812, sensitivity: 0.77, specificity: 0.84, tier: 'superior' },
-      'PCL Tear': { auc: 0.850, sensitivity: 0.80, specificity: 0.88, tier: 'strong' },
-      'MCL Injury': { auc: 0.785, sensitivity: 0.73, specificity: 0.82, tier: 'moderate' },
-      'LCL Injury': { auc: 0.758, sensitivity: 0.70, specificity: 0.80, tier: 'moderate' },
-      'Cartilage Lesion': { auc: 0.745, sensitivity: 0.70, specificity: 0.78, tier: 'superior' },
-      'Patellar Tendinopathy': { auc: 0.740, sensitivity: 0.69, specificity: 0.77, tier: 'moderate' },
-      'Baker Cyst': { auc: 0.805, sensitivity: 0.76, specificity: 0.83, tier: 'superior' },
-      'Normal Joint': { auc: 0.880, sensitivity: 0.84, specificity: 0.89, tier: 'superior' },
+      'ACL Tear': { auc: 0.907, sensitivity: 0.833, specificity: 0.882, accuracy: 0.862, tier: 'superior' },
+      'MCL Injury': { auc: 0.560, sensitivity: 0.444, specificity: 0.755, accuracy: 0.707, tier: 'challenging' },
+      'Medial Meniscus Tear': { auc: 0.786, sensitivity: 0.923, specificity: 0.594, accuracy: 0.741, tier: 'superior' },
+      'Lateral Meniscus Tear': { auc: 0.749, sensitivity: 0.652, specificity: 0.829, accuracy: 0.759, tier: 'strong' },
+      'Medial OA': { auc: 0.876, sensitivity: 0.933, specificity: 0.744, accuracy: 0.793, tier: 'superior' },
+      'Lateral OA': { auc: 0.845, sensitivity: 0.909, specificity: 0.702, accuracy: 0.741, tier: 'superior' },
+      'Patellofemoral OA': { auc: 0.717, sensitivity: 0.619, specificity: 0.838, accuracy: 0.759, tier: 'strong' },
+      'Joint Effusion': { auc: 0.850, sensitivity: 0.800, specificity: 0.826, accuracy: 0.810, tier: 'superior' },
+      'Synovitis': { auc: 0.681, sensitivity: 0.667, specificity: 0.645, accuracy: 0.655, tier: 'moderate' },
+      'Baker Cyst': { auc: 0.908, sensitivity: 0.833, specificity: 0.957, accuracy: 0.931, tier: 'superior' },
+      'Bone Contusion': { auc: 0.655, sensitivity: 0.737, specificity: 0.590, accuracy: 0.638, tier: 'moderate' },
+      'Fracture': { auc: 0.706, sensitivity: 0.500, specificity: 0.925, accuracy: 0.793, tier: 'strong' },
     },
   },
 ];
@@ -115,7 +115,7 @@ export default function ModelComparisonView({
   selectedModelId,
   onSelectModel,
 }: ModelComparisonViewProps) {
-  const [filterMetric, setFilterMetric] = useState<'auc' | 'sensitivity' | 'specificity'>('auc');
+  const [filterMetric, setFilterMetric] = useState<'auc' | 'sensitivity' | 'specificity' | 'accuracy'>('auc');
 
   const modelA = DEFAULT_MODELS[0];
   const modelB = DEFAULT_MODELS[1];
@@ -130,11 +130,11 @@ export default function ModelComparisonView({
           <div>
             <div className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-clinical-600" />
-              <h2 className="text-lg font-bold text-slate-900">AI Diagnostic Engine Benchmarks</h2>
-              <span className="chip chip-neutral">Kaggle Leaderboard Evaluation</span>
+              <h2 className="text-lg font-bold text-slate-900">RSNA Knee MRI Clinical Benchmarks</h2>
+              <span className="chip chip-neutral">N = 58 Gold Human Validation Cohort</span>
             </div>
             <p className="mt-1 text-xs leading-relaxed text-slate-600 max-w-3xl">
-              Comparative benchmark results evaluated on held-out Kaggle / Stanford MRNet test volumes. Ratings reflect multi-task validation across 12 pathology targets under real-world clinical noise and slice thickness variations.
+              Comparative performance statistics across all 12 RSNA knee pathology attributes evaluated on the human-annotated Gold N=58 validation dataset and Kaggle Public Leaderboard.
             </p>
           </div>
 
@@ -201,24 +201,24 @@ export default function ModelComparisonView({
                   </div>
                   <div>
                     <span className="field-label flex items-center gap-1">
-                      <Database className="h-3 w-3" /> Dataset
+                      <Database className="h-3 w-3" /> Gold Val AUC (N=58)
                     </span>
-                    <span className="font-medium text-slate-700 truncate block mt-0.5" title={model.training_dataset}>
-                      {model.training_dataset}
+                    <span className="data-mono font-bold text-slate-800 mt-0.5 block">
+                      {model.overall_auc.toFixed(4)} AUC
                     </span>
                   </div>
                   <div>
                     <span className="field-label flex items-center gap-1">
-                      <Activity className="h-3 w-3" /> Kaggle Score
+                      <Activity className="h-3 w-3" /> Public Kaggle LB
                     </span>
                     <span className="data-mono font-bold text-clinical-700 mt-0.5 block">
-                      {model.kaggle_score} AUC
+                      {model.kaggle_score} LB Score
                     </span>
                   </div>
                 </div>
 
                 <div>
-                  <span className="field-label text-slate-500 block mb-1">Clinical Specialty</span>
+                  <span className="field-label text-slate-500 block mb-1">Clinical Assessment</span>
                   <p className="text-xs font-semibold text-slate-800 bg-clinical-50/60 rounded p-2 border border-clinical-100">
                     {model.best_for}
                   </p>
@@ -227,7 +227,7 @@ export default function ModelComparisonView({
                 {/* Pros & Cons */}
                 <div className="grid grid-cols-1 gap-2 pt-1 text-xs">
                   <div>
-                    <span className="field-label text-emerald-800 font-bold block mb-1">Architectural Strengths</span>
+                    <span className="field-label text-emerald-800 font-bold block mb-1">Architectural Takeaway</span>
                     <ul className="space-y-1">
                       {model.pros.map((pro) => (
                         <li key={pro} className="flex items-start gap-1.5 text-slate-700">
@@ -261,7 +261,7 @@ export default function ModelComparisonView({
         <div className="panel-header flex-wrap">
           <div className="flex items-center gap-2">
             <Layers className="h-4 w-4 text-clinical-600" />
-            <h3 className="panel-title">12 Pathology Targets Benchmark Breakdown</h3>
+            <h3 className="panel-title">12 Knee Pathology Target Statistics</h3>
           </div>
 
           <div className="flex items-center gap-2">
@@ -285,18 +285,24 @@ export default function ModelComparisonView({
               >
                 Specificity
               </button>
+              <button
+                data-active={filterMetric === 'accuracy'}
+                onClick={() => setFilterMetric('accuracy')}
+              >
+                Accuracy
+              </button>
             </div>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px] border-collapse text-left text-xs">
+          <table className="w-full min-w-[750px] border-collapse text-left text-xs">
             <thead>
               <tr className="border-b border-surface-border bg-surface-muted">
-                <th className="field-label px-4 py-2.5">Pathology Target</th>
-                <th className="field-label px-4 py-2.5">2.5D CNN-BiGRU ({filterMetric.toUpperCase()})</th>
-                <th className="field-label px-4 py-2.5">3D Swin-Transformer ({filterMetric.toUpperCase()})</th>
-                <th className="field-label px-4 py-2.5">Superior Architecture</th>
+                <th className="field-label px-4 py-2.5">Pathology Attribute</th>
+                <th className="field-label px-4 py-2.5">Phase 1 Sagittal ({filterMetric.toUpperCase()})</th>
+                <th className="field-label px-4 py-2.5">Phase 4 3-Plane ({filterMetric.toUpperCase()})</th>
+                <th className="field-label px-4 py-2.5">Optimal Architecture Routing</th>
               </tr>
             </thead>
             <tbody>
@@ -315,7 +321,7 @@ export default function ModelComparisonView({
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="data-mono font-bold text-slate-900 w-12">
-                          {(valA * 100).toFixed(0)}%
+                          {(valA * 100).toFixed(1)}%
                         </span>
                         <div className="h-2 w-32 bg-slate-100 rounded-sm overflow-hidden">
                           <div
@@ -328,7 +334,7 @@ export default function ModelComparisonView({
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="data-mono font-bold text-slate-900 w-12">
-                          {(valB * 100).toFixed(0)}%
+                          {(valB * 100).toFixed(1)}%
                         </span>
                         <div className="h-2 w-32 bg-slate-100 rounded-sm overflow-hidden">
                           <div
@@ -365,9 +371,9 @@ export default function ModelComparisonView({
         <div className="flex items-start gap-3">
           <HelpCircle className="h-5 w-5 text-clinical-700 shrink-0 mt-0.5" />
           <div className="text-xs leading-relaxed text-slate-700">
-            <h4 className="font-bold text-slate-900 text-sm mb-1">Which model should I use for my clinical workflow?</h4>
+            <h4 className="font-bold text-slate-900 text-sm mb-1">Architectural Takeaways & Label Routing</h4>
             <p>
-              Use <strong className="text-slate-900">2.5D Volumetric CNN-BiGRU</strong> for rapid Emergency Department (ED) triage when low latency (&lt;20ms) and fast ACL/meniscus tear screening (0.892 AUC on ACL) are required. Select <strong className="text-slate-900">3D SwinUNETR Vision Transformer</strong> (0.798 Kaggle Score) for comprehensive outpatient musculoskeletal consultations where detection of subtle bone marrow contusions (0.812 AUC) or cartilage degradation (0.745 AUC) is critical.
+              Use <strong className="text-slate-900">Phase 1: 1-Plane Sagittal ResNet-18 + BiGRU</strong> (0.784 Public LB) for highest single-view efficiency on Baker's Cysts (0.949 AUC), Medial OA (0.905 AUC), and ACL tears (0.885 AUC). Select <strong className="text-slate-900">Phase 4: 3-Plane ResNet-18 + BiGRU</strong> (0.7699 Gold Val N=58) when multi-plane alignment is required for Medial Meniscus tears (0.786 AUC), Lateral OA (0.845 AUC), and Bone Fractures (0.706 AUC).
             </p>
           </div>
         </div>

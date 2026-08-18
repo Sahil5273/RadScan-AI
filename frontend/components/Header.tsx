@@ -65,11 +65,11 @@ export default function Header({
                 onChange={(e) => onSelectModel(e.target.value)}
                 className="bg-transparent text-xs font-semibold text-white outline-none cursor-pointer"
               >
-                <option value="model-2.5d-bigru" className="text-slate-900">
-                  2.5D Volumetric CNN-BiGRU (18ms)
+                <option value="phase1-sagittal-resnet18" className="text-slate-900">
+                  Phase 1: 1-Plane Sagittal (0.784 LB)
                 </option>
-                <option value="model-3d-swin" className="text-slate-900">
-                  3D SwinUNETR Transformer (62ms)
+                <option value="phase4-3plane-resnet18" className="text-slate-900">
+                  Phase 4: 3-Plane Fusion (0.7699 Gold Val)
                 </option>
               </select>
             </div>
@@ -158,13 +158,13 @@ export default function Header({
               <BarChart3 className="h-4 w-4" />
               Model Comparison & Benchmarks
               <span className="chip chip-info text-[9px] uppercase ml-1">
-                Dual Models
+                RSNA Benchmark
               </span>
             </button>
           </div>
 
           <div className="hidden items-center gap-2 py-2 text-xs text-slate-500 sm:flex">
-            <span>Model: <strong className="text-slate-800 font-semibold">{selectedModel === 'model-2.5d-bigru' ? '2.5D CNN-BiGRU' : '3D Swin-Transformer'}</strong></span>
+            <span>Model: <strong className="text-slate-800 font-semibold">{selectedModel === 'phase1-sagittal-resnet18' ? 'Phase 1 Sagittal (0.784 LB)' : 'Phase 4 3-Plane (0.7699 Gold)'}</strong></span>
           </div>
         </div>
       </nav>

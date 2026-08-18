@@ -22,7 +22,7 @@ export default function Home() {
   // New UI & Model State
   const [uiMode, setUiMode] = useState<'simple' | 'advanced'>('simple');
   const [currentView, setCurrentView] = useState<'workspace' | 'models'>('workspace');
-  const [selectedModel, setSelectedModel] = useState<string>('model-2.5d-bigru');
+  const [selectedModel, setSelectedModel] = useState<string>('phase1-sagittal-resnet18');
 
   // Fetch prediction data when sample or model changes
   const fetchPrediction = async (sampleId: string, modelId: string = selectedModel) => {
@@ -111,7 +111,7 @@ export default function Home() {
 
   // Initial load
   useEffect(() => {
-    fetchPrediction('sample-acl-tear', 'model-2.5d-bigru');
+    fetchPrediction('sample-acl-tear', 'phase1-sagittal-resnet18');
   }, []);
 
   return (

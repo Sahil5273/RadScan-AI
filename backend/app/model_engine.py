@@ -1,10 +1,9 @@
 """
 RadScan AI Multi-Model Diagnostic Engine
-Supports:
-1. Model 1: 2.5D Volumetric CNN-BiGRU (Fast Spatial-Temporal Sequence Classifier)
-2. Model 2: 3D SwinUNETR Vision Transformer (Deep 3D Multi-Planar Attention Classifier)
+RSNA Knee MRI Abnormality Detection (N = 58 Human Gold Validation Cohort)
 
-Benchmark Metrics aligned with Kaggle Leaderboard & Stanford MRNet Competition Test Evaluation.
+Model 1: Phase 1 — 1-Plane (Sagittal) ResNet-18 + BiGRU (Public LB: 0.784 | Gold Val AUC: 0.7488)
+Model 2: Phase 4 — 3-Plane (Sag + Cor + Ax) ResNet-18 + BiGRU (Public LB: 0.782 | Gold Val AUC: 0.7699)
 """
 import math
 import numpy as np
@@ -14,88 +13,88 @@ from app.sample_data import get_sample_by_id
 class DiagnosticModelEngine:
     PATHOLOGY_TARGETS = [
         "ACL Tear",
+        "MCL Injury",
         "Medial Meniscus Tear",
         "Lateral Meniscus Tear",
+        "Medial OA",
+        "Lateral OA",
+        "Patellofemoral OA",
         "Joint Effusion",
-        "Bone Marrow Edema",
-        "PCL Tear",
-        "MCL Injury",
-        "LCL Injury",
-        "Cartilage Lesion",
-        "Patellar Tendinopathy",
+        "Synovitis",
         "Baker Cyst",
-        "Normal Joint"
+        "Bone Contusion",
+        "Fracture"
     ]
 
     MODELS_METADATA = {
-        "model-2.5d-bigru": {
-            "id": "model-2.5d-bigru",
-            "name": "2.5D Volumetric CNN-BiGRU",
-            "short_name": "2.5D CNN-BiGRU",
-            "architecture": "ResNet-50 + Bidirectional GRU (2.5D Stack)",
-            "latency_ms": 18,
-            "gpu_memory": "2.1 GB",
-            "training_dataset": "Kaggle / Stanford MRNet Benchmark (1,250 Knee MRI Volumes)",
-            "best_for": "Acute ligament tears (ACL/MCL/LCL) and rapid ER triage",
-            "overall_auc": 0.784,
+        "phase1-sagittal-resnet18": {
+            "id": "phase1-sagittal-resnet18",
+            "name": "Phase 1: 1-Plane (Sagittal) ResNet-18 + BiGRU",
+            "short_name": "Phase 1 (Sagittal)",
+            "architecture": "2D ResNet-18 + BiGRU (Temporal Max-Pooling)",
+            "latency_ms": 14,
+            "gpu_memory": "1.8 GB",
+            "training_dataset": "RSNA Knee MRI Dataset (224x224x24 Slices)",
+            "best_for": "Cruciate ligament tears (ACL 0.885 AUC) & Baker cysts (0.949 AUC)",
+            "overall_auc": 0.7488,
             "kaggle_score": 0.784,
             "pros": [
-                "Extremely low latency (~18ms inference per scan)",
-                "Superior cross-slice temporal sequence continuity for ACL/PCL tears",
-                "Lightweight memory footprint on edge and cloud containers"
+                "Highest solo Kaggle Public Leaderboard score (0.784 LB)",
+                "Sagittal view dominates cruciate ligament & meniscal tearing patterns",
+                "Lightweight single-plane inference (~14ms per scan)"
             ],
             "cons": [
-                "Lower performance on subtle focal cartilage lesions (0.68 AUC)",
-                "Requires ordered sagittal/coronal slice stack inputs"
+                "Lower accuracy on collateral ligaments (MCL 0.583 AUC)",
+                "Limited view for multi-planar coronal fracture alignment"
             ],
             "label_performance": {
-                "ACL Tear": {"auc": 0.892, "sensitivity": 0.86, "specificity": 0.91, "tier": "superior"},
-                "Medial Meniscus Tear": {"auc": 0.814, "sensitivity": 0.78, "specificity": 0.84, "tier": "strong"},
-                "Lateral Meniscus Tear": {"auc": 0.775, "sensitivity": 0.73, "specificity": 0.81, "tier": "moderate"},
-                "Joint Effusion": {"auc": 0.820, "sensitivity": 0.79, "specificity": 0.84, "tier": "strong"},
-                "Bone Marrow Edema": {"auc": 0.742, "sensitivity": 0.71, "specificity": 0.77, "tier": "moderate"},
-                "PCL Tear": {"auc": 0.875, "sensitivity": 0.83, "specificity": 0.90, "tier": "superior"},
-                "MCL Injury": {"auc": 0.798, "sensitivity": 0.75, "specificity": 0.83, "tier": "strong"},
-                "LCL Injury": {"auc": 0.765, "sensitivity": 0.72, "specificity": 0.80, "tier": "moderate"},
-                "Cartilage Lesion": {"auc": 0.682, "sensitivity": 0.63, "specificity": 0.72, "tier": "challenging"},
-                "Patellar Tendinopathy": {"auc": 0.715, "sensitivity": 0.67, "specificity": 0.75, "tier": "challenging"},
-                "Baker Cyst": {"auc": 0.770, "sensitivity": 0.73, "specificity": 0.80, "tier": "moderate"},
-                "Normal Joint": {"auc": 0.885, "sensitivity": 0.85, "specificity": 0.90, "tier": "superior"}
+                "ACL Tear": {"auc": 0.885, "sensitivity": 0.792, "specificity": 0.971, "accuracy": 0.897, "tier": "superior"},
+                "MCL Injury": {"auc": 0.583, "sensitivity": 0.444, "specificity": 0.898, "accuracy": 0.828, "tier": "challenging"},
+                "Medial Meniscus Tear": {"auc": 0.665, "sensitivity": 0.846, "specificity": 0.469, "accuracy": 0.638, "tier": "moderate"},
+                "Lateral Meniscus Tear": {"auc": 0.647, "sensitivity": 1.000, "specificity": 0.371, "accuracy": 0.621, "tier": "moderate"},
+                "Medial OA": {"auc": 0.905, "sensitivity": 0.867, "specificity": 0.884, "accuracy": 0.879, "tier": "superior"},
+                "Lateral OA": {"auc": 0.729, "sensitivity": 0.636, "specificity": 0.872, "accuracy": 0.828, "tier": "strong"},
+                "Patellofemoral OA": {"auc": 0.741, "sensitivity": 0.524, "specificity": 0.919, "accuracy": 0.776, "tier": "strong"},
+                "Joint Effusion": {"auc": 0.841, "sensitivity": 0.829, "specificity": 0.783, "accuracy": 0.810, "tier": "superior"},
+                "Synovitis": {"auc": 0.711, "sensitivity": 0.778, "specificity": 0.613, "accuracy": 0.690, "tier": "moderate"},
+                "Baker Cyst": {"auc": 0.949, "sensitivity": 1.000, "specificity": 0.761, "accuracy": 0.810, "tier": "superior"},
+                "Bone Contusion": {"auc": 0.764, "sensitivity": 0.632, "specificity": 0.872, "accuracy": 0.793, "tier": "strong"},
+                "Fracture": {"auc": 0.565, "sensitivity": 0.444, "specificity": 0.750, "accuracy": 0.655, "tier": "challenging"}
             }
         },
-        "model-3d-swin": {
-            "id": "model-3d-swin",
-            "name": "3D SwinUNETR Vision Transformer",
-            "short_name": "3D Swin-Transformer",
-            "architecture": "3D Swin Transformer + Feature Pyramid Network",
-            "latency_ms": 62,
-            "gpu_memory": "5.4 GB",
-            "training_dataset": "Kaggle / Stanford MRNet Benchmark (1,250 Knee MRI Volumes)",
-            "best_for": "Subtle bone marrow edema, joint effusion, and articular cartilage lesions",
-            "overall_auc": 0.798,
-            "kaggle_score": 0.798,
+        "phase4-3plane-resnet18": {
+            "id": "phase4-3plane-resnet18",
+            "name": "Phase 4: 3-Plane (Sag + Cor + Ax) ResNet-18 + BiGRU",
+            "short_name": "Phase 4 (3-Plane Fusion)",
+            "architecture": "3-Plane Concatenation (Sag+Cor+Ax) + BiGRU (1536 Features)",
+            "latency_ms": 42,
+            "gpu_memory": "4.2 GB",
+            "training_dataset": "RSNA Knee MRI Dataset (224x224x32 Extended Slices)",
+            "best_for": "Highest Gold Validation AUC (0.7699) & Meniscal / Fracture multi-plane alignment",
+            "overall_auc": 0.7699,
+            "kaggle_score": 0.782,
             "pros": [
-                "Full 3D spatial self-attention captures micro-fractures & marrow edema",
-                "Higher sensitivity for focal cartilage degradation (0.74 AUC vs 0.68 AUC)",
-                "Robust across non-standard slice thickness variations (2.0mm - 5.0mm)"
+                "Highest Gold Human-Annotated Validation AUC (0.7699 Gold Val)",
+                "Multi-plane fusion improves Medial Meniscus (0.786 AUC) & Lateral OA (0.845 AUC)",
+                "Robust cross-plane spatial alignment across Sagittal, Coronal & Axial views"
             ],
             "cons": [
-                "Higher computational latency (~62ms vs ~18ms)",
-                "Larger GPU VRAM requirements during batch inference"
+                "Higher inference latency (~42ms) due to 3-plane feature extraction",
+                "Requires simultaneous multi-planar series availability"
             ],
             "label_performance": {
-                "ACL Tear": {"auc": 0.878, "sensitivity": 0.84, "specificity": 0.90, "tier": "strong"},
-                "Medial Meniscus Tear": {"auc": 0.808, "sensitivity": 0.77, "specificity": 0.83, "tier": "strong"},
-                "Lateral Meniscus Tear": {"auc": 0.782, "sensitivity": 0.74, "specificity": 0.81, "tier": "moderate"},
-                "Joint Effusion": {"auc": 0.854, "sensitivity": 0.82, "specificity": 0.87, "tier": "superior"},
-                "Bone Marrow Edema": {"auc": 0.812, "sensitivity": 0.77, "specificity": 0.84, "tier": "superior"},
-                "PCL Tear": {"auc": 0.850, "sensitivity": 0.80, "specificity": 0.88, "tier": "strong"},
-                "MCL Injury": {"auc": 0.785, "sensitivity": 0.73, "specificity": 0.82, "tier": "moderate"},
-                "LCL Injury": {"auc": 0.758, "sensitivity": 0.70, "specificity": 0.80, "tier": "moderate"},
-                "Cartilage Lesion": {"auc": 0.745, "sensitivity": 0.70, "specificity": 0.78, "tier": "superior"},
-                "Patellar Tendinopathy": {"auc": 0.740, "sensitivity": 0.69, "specificity": 0.77, "tier": "moderate"},
-                "Baker Cyst": {"auc": 0.805, "sensitivity": 0.76, "specificity": 0.83, "tier": "superior"},
-                "Normal Joint": {"auc": 0.880, "sensitivity": 0.84, "specificity": 0.89, "tier": "superior"}
+                "ACL Tear": {"auc": 0.907, "sensitivity": 0.833, "specificity": 0.882, "accuracy": 0.862, "tier": "superior"},
+                "MCL Injury": {"auc": 0.560, "sensitivity": 0.444, "specificity": 0.755, "accuracy": 0.707, "tier": "challenging"},
+                "Medial Meniscus Tear": {"auc": 0.786, "sensitivity": 0.923, "specificity": 0.594, "accuracy": 0.741, "tier": "superior"},
+                "Lateral Meniscus Tear": {"auc": 0.749, "sensitivity": 0.652, "specificity": 0.829, "accuracy": 0.759, "tier": "strong"},
+                "Medial OA": {"auc": 0.876, "sensitivity": 0.933, "specificity": 0.744, "accuracy": 0.793, "tier": "superior"},
+                "Lateral OA": {"auc": 0.845, "sensitivity": 0.909, "specificity": 0.702, "accuracy": 0.741, "tier": "superior"},
+                "Patellofemoral OA": {"auc": 0.717, "sensitivity": 0.619, "specificity": 0.838, "accuracy": 0.759, "tier": "strong"},
+                "Joint Effusion": {"auc": 0.850, "sensitivity": 0.800, "specificity": 0.826, "accuracy": 0.810, "tier": "superior"},
+                "Synovitis": {"auc": 0.681, "sensitivity": 0.667, "specificity": 0.645, "accuracy": 0.655, "tier": "moderate"},
+                "Baker Cyst": {"auc": 0.908, "sensitivity": 0.833, "specificity": 0.957, "accuracy": 0.931, "tier": "superior"},
+                "Bone Contusion": {"auc": 0.655, "sensitivity": 0.737, "specificity": 0.590, "accuracy": 0.638, "tier": "moderate"},
+                "Fracture": {"auc": 0.706, "sensitivity": 0.500, "specificity": 0.925, "accuracy": 0.793, "tier": "strong"}
             }
         }
     }
@@ -104,22 +103,22 @@ class DiagnosticModelEngine:
         self.is_loaded = True
         self.device = "GCP Cloud Run L4 GPU / PyTorch CUDA"
 
-    def predict_sample(self, sample_id: str, model_id: str = "model-2.5d-bigru") -> Dict[str, Any]:
+    def predict_sample(self, sample_id: str, model_id: str = "phase1-sagittal-resnet18") -> Dict[str, Any]:
         sample = get_sample_by_id(sample_id)
         if not sample:
             raise ValueError(f"Sample ID {sample_id} not found.")
 
-        selected_model = model_id if model_id in self.MODELS_METADATA else "model-2.5d-bigru"
+        selected_model = model_id if model_id in self.MODELS_METADATA else "phase1-sagittal-resnet18"
         model_meta = self.MODELS_METADATA[selected_model]
 
-        base_probs = dict(sample["pathology_probabilities"])
+        base_probs = self._adapt_sample_pathologies(sample["pathology_probabilities"])
         adjusted_probs = self._apply_model_adjustments(base_probs, selected_model)
 
         return {
             "status": "success",
             "model_id": selected_model,
             "model_name": model_meta["name"],
-            "model_version": f"{model_meta['short_name']} (Kaggle Score: {model_meta['kaggle_score']})",
+            "model_version": f"{model_meta['short_name']} (Kaggle: {model_meta['kaggle_score']} LB / Gold: {model_meta['overall_auc']} AUC)",
             "latency_ms": model_meta["latency_ms"],
             "device": self.device,
             "sample_id": sample_id,
@@ -132,8 +131,8 @@ class DiagnosticModelEngine:
             "findings_summary": sample["findings_summary"]
         }
 
-    def predict_custom_dicom(self, filename: str, file_bytes: bytes, model_id: str = "model-2.5d-bigru") -> Dict[str, Any]:
-        selected_model = model_id if model_id in self.MODELS_METADATA else "model-2.5d-bigru"
+    def predict_custom_dicom(self, filename: str, file_bytes: bytes, model_id: str = "phase1-sagittal-resnet18") -> Dict[str, Any]:
+        selected_model = model_id if model_id in self.MODELS_METADATA else "phase1-sagittal-resnet18"
         model_meta = self.MODELS_METADATA[selected_model]
 
         byte_sum = sum(file_bytes[:1000]) if file_bytes else 42
@@ -141,22 +140,21 @@ class DiagnosticModelEngine:
         acl_prob = round(0.15 + (byte_sum % 80) / 100.0, 2)
         meniscus_prob = round(0.10 + ((byte_sum * 3) % 75) / 100.0, 2)
         effusion_prob = round(0.20 + ((byte_sum * 7) % 70) / 100.0, 2)
-        edema_prob = round(0.10 + ((byte_sum * 13) % 65) / 100.0, 2)
-        normal_prob = round(max(0.01, 1.0 - max(acl_prob, meniscus_prob)), 2)
+        oa_prob = round(0.10 + ((byte_sum * 13) % 65) / 100.0, 2)
 
         raw_probs = {
             "ACL Tear": min(0.98, acl_prob),
+            "MCL Injury": round(acl_prob * 0.35, 2),
             "Medial Meniscus Tear": min(0.98, meniscus_prob),
             "Lateral Meniscus Tear": round(meniscus_prob * 0.4, 2),
+            "Medial OA": min(0.95, oa_prob),
+            "Lateral OA": round(oa_prob * 0.6, 2),
+            "Patellofemoral OA": round(oa_prob * 0.4, 2),
             "Joint Effusion": min(0.95, effusion_prob),
-            "Bone Marrow Edema": min(0.92, edema_prob),
-            "PCL Tear": 0.03,
-            "MCL Injury": round(acl_prob * 0.35, 2),
-            "LCL Injury": 0.05,
-            "Cartilage Lesion": round(edema_prob * 0.5, 2),
-            "Patellar Tendinopathy": 0.08,
+            "Synovitis": round(effusion_prob * 0.5, 2),
             "Baker Cyst": 0.12,
-            "Normal Joint": normal_prob
+            "Bone Contusion": min(0.92, oa_prob),
+            "Fracture": 0.05
         }
 
         adjusted_probs = self._apply_model_adjustments(raw_probs, selected_model)
@@ -173,7 +171,7 @@ class DiagnosticModelEngine:
             "status": "success",
             "model_id": selected_model,
             "model_name": model_meta["name"],
-            "model_version": f"{model_meta['short_name']} (Kaggle Score: {model_meta['kaggle_score']})",
+            "model_version": f"{model_meta['short_name']} (Kaggle: {model_meta['kaggle_score']} LB / Gold: {model_meta['overall_auc']} AUC)",
             "latency_ms": model_meta["latency_ms"],
             "device": self.device,
             "filename": filename,
@@ -189,24 +187,40 @@ class DiagnosticModelEngine:
     def get_models_metadata(self) -> List[Dict[str, Any]]:
         return list(self.MODELS_METADATA.values())
 
+    def _adapt_sample_pathologies(self, sample_pathologies: Dict[str, float]) -> Dict[str, float]:
+        adapted = {
+            "ACL Tear": sample_pathologies.get("ACL Tear", 0.02),
+            "MCL Injury": sample_pathologies.get("MCL Injury", 0.02),
+            "Medial Meniscus Tear": sample_pathologies.get("Medial Meniscus Tear", 0.04),
+            "Lateral Meniscus Tear": sample_pathologies.get("Lateral Meniscus Tear", 0.03),
+            "Medial OA": sample_pathologies.get("Cartilage Lesion", 0.15),
+            "Lateral OA": round(sample_pathologies.get("Cartilage Lesion", 0.15) * 0.6, 2),
+            "Patellofemoral OA": round(sample_pathologies.get("Patellar Tendinopathy", 0.08), 2),
+            "Joint Effusion": sample_pathologies.get("Joint Effusion", 0.05),
+            "Synovitis": round(sample_pathologies.get("Joint Effusion", 0.05) * 0.6, 2),
+            "Baker Cyst": sample_pathologies.get("Baker Cyst", 0.02),
+            "Bone Contusion": sample_pathologies.get("Bone Marrow Edema", 0.03),
+            "Fracture": sample_pathologies.get("PCL Tear", 0.01)
+        }
+        return adapted
+
     def _apply_model_adjustments(self, probs: Dict[str, float], model_id: str) -> Dict[str, float]:
         adjusted = dict(probs)
-        if model_id == "model-3d-swin":
-            if "Bone Marrow Edema" in adjusted and adjusted["Bone Marrow Edema"] > 0.20:
-                adjusted["Bone Marrow Edema"] = min(0.98, round(adjusted["Bone Marrow Edema"] * 1.10, 2))
-            if "Cartilage Lesion" in adjusted and adjusted["Cartilage Lesion"] > 0.20:
-                adjusted["Cartilage Lesion"] = min(0.96, round(adjusted["Cartilage Lesion"] * 1.12, 2))
-            if "Joint Effusion" in adjusted and adjusted["Joint Effusion"] > 0.20:
-                adjusted["Joint Effusion"] = min(0.99, round(adjusted["Joint Effusion"] * 1.05, 2))
+        if model_id == "phase4-3plane-resnet18":
+            if "Medial Meniscus Tear" in adjusted and adjusted["Medial Meniscus Tear"] > 0.20:
+                adjusted["Medial Meniscus Tear"] = min(0.98, round(adjusted["Medial Meniscus Tear"] * 1.10, 2))
+            if "Lateral OA" in adjusted and adjusted["Lateral OA"] > 0.20:
+                adjusted["Lateral OA"] = min(0.96, round(adjusted["Lateral OA"] * 1.12, 2))
+            if "Fracture" in adjusted and adjusted["Fracture"] > 0.20:
+                adjusted["Fracture"] = min(0.95, round(adjusted["Fracture"] * 1.15, 2))
         return adjusted
 
     def _determine_primary_diagnosis(self, pathologies: Dict[str, float]) -> str:
-        filtered = {k: v for k, v in pathologies.items() if k != "Normal Joint"}
-        top_target = max(filtered, key=filtered.get)
-        top_prob = filtered[top_target]
+        top_target = max(pathologies, key=pathologies.get)
+        top_prob = pathologies[top_target]
 
         if top_prob < 0.35:
-            return "Normal Joint (No significant acute pathology detected)"
+            return "Unremarkable Joint (No significant acute pathology detected)"
         return f"{top_target} ({int(top_prob * 100)}% Probability)"
 
 model_engine = DiagnosticModelEngine()
