@@ -8,6 +8,8 @@ import MriViewer from '@/components/MriViewer';
 import PathologyBreakdown from '@/components/PathologyBreakdown';
 import ReportGenerator from '@/components/ReportGenerator';
 import InteractiveTour from '@/components/InteractiveTour';
+import SimpleTriageView from '@/components/SimpleTriageView';
+import ModelComparisonView from '@/components/ModelComparisonView';
 
 export default function Home() {
   const [activeSampleId, setActiveSampleId] = useState<string>('sample-acl-tear');
@@ -17,12 +19,18 @@ export default function Home() {
   const [isLoadingReport, setIsLoadingReport] = useState<boolean>(false);
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
 
-  // Fetch prediction data when sample changes
-  const fetchPrediction = async (sampleId: string) => {
+  // New UI & Model State
+  const [uiMode, setUiMode] = useState<'simple' | 'advanced'>('simple');
+  const [currentView, setCurrentView] = useState<'workspace' | 'models'>('workspace');
+  const [selectedModel, setSelectedModel] = useState<string>('model-2.5d-bigru');
+
+  // Fetch prediction data when sample or model changes
+  const fetchPrediction = async (sampleId: string, modelId: string = selectedModel) => {
     setIsLoadingPredict(true);
     try {
       const formData = new FormData();
       formData.append('sample_id', sampleId);
+      formData.append('model_id', modelId);
 
       const res = await fetch('/api/v1/predict', {
         method: 'POST',
@@ -51,6 +59,7 @@ export default function Home() {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('model_id', selectedModel);
 
       const res = await fetch('/api/v1/predict', {
         method: 'POST',
@@ -94,61 +103,114 @@ export default function Home() {
     }
   };
 
+  // Handle Model Change
+  const handleSelectModel = (modelId: string) => {
+    setSelectedModel(modelId);
+    fetchPrediction(activeSampleId, modelId);
+  };
+
   // Initial load
   useEffect(() => {
-    fetchPrediction('sample-acl-tear');
+    fetchPrediction('sample-acl-tear', 'model-2.5d-bigru');
   }, []);
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header onOpenTour={() => setIsTourOpen(true)} />
+      <Header
+        onOpenTour={() => setIsTourOpen(true)}
+        uiMode={uiMode}
+        onToggleUiMode={(mode) => setUiMode(mode)}
+        currentView={currentView}
+        onChangeView={(view) => setCurrentView(view)}
+        selectedModel={selectedModel}
+        onSelectModel={handleSelectModel}
+      />
 
       <InteractiveTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
 
       <main className="mx-auto w-full max-w-[1680px] flex-1 space-y-3 p-3 sm:p-4">
-        <PatientBanner
-          sampleId={activeSampleId}
-          patientInfo={predictionData?.patient_info || null}
-          primaryDiagnosis={predictionData?.primary_diagnosis || ''}
-          isLoading={isLoadingPredict}
-        />
+        {currentView === 'models' ? (
+          <ModelComparisonView
+            selectedModelId={selectedModel}
+            onSelectModel={(modelId) => {
+              handleSelectModel(modelId);
+              setCurrentView('workspace');
+            }}
+          />
+        ) : uiMode === 'simple' ? (
+          <div className="space-y-3">
+            <SampleSelector
+              activeSampleId={activeSampleId}
+              onSelectSample={(id) => {
+                setActiveSampleId(id);
+                fetchPrediction(id, selectedModel);
+              }}
+              onUploadCustom={handleUploadCustom}
+              isLoading={isLoadingPredict}
+            />
 
-        <SampleSelector
-          activeSampleId={activeSampleId}
-          onSelectSample={(id) => {
-            setActiveSampleId(id);
-            fetchPrediction(id);
-          }}
-          onUploadCustom={handleUploadCustom}
-          isLoading={isLoadingPredict}
-        />
-
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-12">
-          <div className="xl:col-span-8">
-            <MriViewer
+            <SimpleTriageView
               sampleId={activeSampleId}
-              gradcam={predictionData?.gradcam || null}
-              sliceCount={predictionData?.slice_count || 24}
-              keySliceIndex={predictionData?.key_slice_index || 12}
-              studyDescription={predictionData?.patient_info?.study_description}
-            />
-          </div>
-
-          <div className="xl:col-span-4">
-            <PathologyBreakdown
+              patientInfo={predictionData?.patient_info || null}
+              primaryDiagnosis={predictionData?.primary_diagnosis || ''}
               pathologies={predictionData?.pathologies || {}}
-              primaryDiagnosis={predictionData?.primary_diagnosis || 'Awaiting analysis'}
+              gradcam={predictionData?.gradcam || null}
               findingsSummary={predictionData?.findings_summary}
-              modelVersion={predictionData?.model_version}
+              report={reportData}
+              onGenerateReport={() => fetchReport()}
+              isGeneratingReport={isLoadingReport}
+              modelName={predictionData?.model_name || '2.5D Volumetric CNN-BiGRU'}
+              onSwitchToAdvanced={() => setUiMode('advanced')}
             />
           </div>
-        </div>
+        ) : (
+          /* Advanced PACS Workstation View */
+          <div className="space-y-3">
+            <PatientBanner
+              sampleId={activeSampleId}
+              patientInfo={predictionData?.patient_info || null}
+              primaryDiagnosis={predictionData?.primary_diagnosis || ''}
+              isLoading={isLoadingPredict}
+            />
 
-        <ReportGenerator
-          report={reportData}
-          onGenerateReport={() => fetchReport()}
-          isGenerating={isLoadingReport}
-        />
+            <SampleSelector
+              activeSampleId={activeSampleId}
+              onSelectSample={(id) => {
+                setActiveSampleId(id);
+                fetchPrediction(id, selectedModel);
+              }}
+              onUploadCustom={handleUploadCustom}
+              isLoading={isLoadingPredict}
+            />
+
+            <div className="grid grid-cols-1 gap-3 xl:grid-cols-12">
+              <div className="xl:col-span-8">
+                <MriViewer
+                  sampleId={activeSampleId}
+                  gradcam={predictionData?.gradcam || null}
+                  sliceCount={predictionData?.slice_count || 24}
+                  keySliceIndex={predictionData?.key_slice_index || 12}
+                  studyDescription={predictionData?.patient_info?.study_description}
+                />
+              </div>
+
+              <div className="xl:col-span-4">
+                <PathologyBreakdown
+                  pathologies={predictionData?.pathologies || {}}
+                  primaryDiagnosis={predictionData?.primary_diagnosis || 'Awaiting analysis'}
+                  findingsSummary={predictionData?.findings_summary}
+                  modelVersion={predictionData?.model_version}
+                />
+              </div>
+            </div>
+
+            <ReportGenerator
+              report={reportData}
+              onGenerateReport={() => fetchReport()}
+              isGenerating={isLoadingReport}
+            />
+          </div>
+        )}
       </main>
 
       <footer className="border-t border-surface-border bg-white px-4 py-4 sm:px-6">
@@ -163,9 +225,9 @@ export default function Home() {
           <div className="flex shrink-0 items-center gap-3">
             <span>DICOM de-identified</span>
             <span className="text-surface-strong">|</span>
-            <span>Access logged for audit</span>
+            <span>Mode: {uiMode.toUpperCase()}</span>
             <span className="text-surface-strong">|</span>
-            <span>v2.5</span>
+            <span>Engine: {selectedModel === 'model-2.5d-bigru' ? '2.5D CNN-BiGRU' : '3D SwinUNETR'}</span>
           </div>
         </div>
       </footer>

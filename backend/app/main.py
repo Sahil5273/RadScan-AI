@@ -68,28 +68,35 @@ def get_sample(sample_id: str):
         raise HTTPException(status_code=404, detail=f"Sample '{sample_id}' not found.")
     return {"status": "success", "sample": sample}
 
+@app.get("/api/v1/models")
+def list_models():
+    """Returns metadata and benchmark comparisons for available AI diagnostic models."""
+    return {"status": "success", "models": model_engine.get_models_metadata()}
+
 @app.post("/api/v1/predict")
 async def predict_mri(
     sample_id: Optional[str] = Form(None),
+    model_id: Optional[str] = Form("model-2.5d-bigru"),
     file: Optional[UploadFile] = File(None)
 ):
     """
-    Runs 2.5D Volumetric MRI Inference & Grad-CAM Heatmap Generation.
-    Accepts either a 1-click sample_id OR a custom DICOM file upload.
+    Runs Volumetric MRI Inference & Grad-CAM Heatmap Generation using selected AI model.
+    Accepts either a 1-click sample_id OR a custom DICOM file upload, plus optional model_id.
     """
+    target_model = model_id or "model-2.5d-bigru"
     if sample_id:
         try:
-            result = model_engine.predict_sample(sample_id)
+            result = model_engine.predict_sample(sample_id, model_id=target_model)
             return result
         except ValueError as e:
             raise HTTPException(status_code=404, detail=str(e))
     elif file:
         file_bytes = await file.read()
-        result = model_engine.predict_custom_dicom(file.filename, file_bytes)
+        result = model_engine.predict_custom_dicom(file.filename, file_bytes, model_id=target_model)
         return result
     else:
         # Default fallback to sample-acl-tear if neither provided
-        return model_engine.predict_sample("sample-acl-tear")
+        return model_engine.predict_sample("sample-acl-tear", model_id=target_model)
 
 @app.post("/api/v1/report")
 def generate_report(req: ReportRequest):

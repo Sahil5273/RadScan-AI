@@ -11,9 +11,11 @@ class Settings(BaseSettings):
     VERTEX_AI_MODEL: str = os.getenv("VERTEX_AI_MODEL", "gemini-1.5-pro-002")
     
     # Model Configuration
-    MODEL_PATH: str = os.getenv("MODEL_PATH", "models/knee_mri_25d_cnn_bigru.pt")
+    DEFAULT_MODEL: str = os.getenv("DEFAULT_MODEL", "model-2.5d-bigru")
+    MODEL_PATH_BIGRU: str = os.getenv("MODEL_PATH_BIGRU", "models/knee_mri_25d_cnn_bigru.pt")
+    MODEL_PATH_SWIN: str = os.getenv("MODEL_PATH_SWIN", "models/knee_mri_3d_swin_unetr.pt")
     USE_GPU: bool = os.getenv("USE_GPU", "true").lower() == "true"
-    
+
     class Config:
         case_sensitive = True
 

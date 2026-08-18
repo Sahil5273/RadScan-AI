@@ -1,0 +1,125 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//RadScan AI//Hackathon Master Schedule//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:RadScan AI Hackathon Master Schedule
+
+BEGIN:VEVENT
+SUMMARY:📝 Register All 7 Hackathons & Request $150 GCP Credits
+DTSTART:20260818T143000Z
+DTEND:20260818T153000Z
+DESCRIPTION:Register for All Things Agentic, Agentic Cinema, DevNetwork, Hack for Humanity, AI Infra Summit, Gemini XPRIZE, GCP Track. Submit credit request form.
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-PT15M
+ACTION:DISPLAY
+DESCRIPTION:Reminder: Register 7 Hackathons & Submit Credit Request Form
+END:VALARM
+END:VEVENT
+
+BEGIN:VEVENT
+SUMMARY:⚡ Complete Shared Demo Core (FastAPI + Cloud Run + Gemini)
+DTSTART:20260822T120000Z
+DTEND:20260822T180000Z
+DESCRIPTION:Finish FastAPI DICOM agent, Gemini 3.5 report parser, Phase 3 multimodal blend, and GCP Cloud Run scale-to-zero container deployment.
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Reminder: Complete Shared Demo Core Build
+END:VALARM
+END:VEVENT
+
+BEGIN:VEVENT
+SUMMARY:📹 Record Demo Video & Hot-Swap Phase 13 Model Weights
+DTSTART:20260825T140000Z
+DTEND:20260825T180000Z
+DESCRIPTION:Record 4-minute demo pitch video for All Things Agentic. Check Phase 13 LB score and hot-swap weights if > 0.784.
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:Reminder: Record Pitch Video & Hot-Swap Model Weights
+END:VALARM
+END:VEVENT
+
+BEGIN:VEVENT
+SUMMARY:🚀 SUBMIT #1: All Things Agentic Hackathon ($180k Pool)
+DTSTART:20260831T230000Z
+DTEND:20260901T000000Z
+DESCRIPTION:Submit entry before 5:00 PM PDT for All Things Agentic Hackathon on Devpost.
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:URGENT: Submit #1 All Things Agentic Hackathon
+END:VALARM
+END:VEVENT
+
+BEGIN:VEVENT
+SUMMARY:🚀 SUBMIT #3: DevNetwork API+Cloud+AI Hackathon ($39.5k Pool)
+DTSTART:20260903T160000Z
+DTEND:20260903T170000Z
+DESCRIPTION:Submit entry before 10:00 AM PDT for DevNetwork API+Cloud+AI Hackathon on Devpost.
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:URGENT: Submit #3 DevNetwork Hackathon
+END:VALARM
+END:VEVENT
+
+BEGIN:VEVENT
+SUMMARY:🚀 SUBMIT #7: Hack for Humanity (Physical Health Track)
+DTSTART:20260904T170000Z
+DTEND:20260904T180000Z
+DESCRIPTION:Submit entry for Hack for Humanity Summer 2026 on Devpost.
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:URGENT: Submit #7 Hack for Humanity
+END:VALARM
+END:VEVENT
+
+BEGIN:VEVENT
+SUMMARY:🚀 SUBMIT #4: Agentic Cinema Hackathon ($75k Pool)
+DTSTART:20260909T200000Z
+DTEND:20260909T210000Z
+DESCRIPTION:Submit entry before 2:00 PM PDT for Agentic Cinema Hackathon (Grafana/ClickHouse Track).
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:URGENT: Submit #4 Agentic Cinema Hackathon
+END:VALARM
+END:VEVENT
+
+BEGIN:VEVENT
+SUMMARY:🚀 SUBMIT #2: AI Infra Summit Sprint Week
+DTSTART:20260917T170000Z
+DTEND:20260917T180000Z
+DESCRIPTION:Submit entry for AI Infra Summit Hackathon on lablab.ai.
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-PT2H
+ACTION:DISPLAY
+DESCRIPTION:URGENT: Submit #2 AI Infra Summit Hackathon
+END:VALARM
+END:VEVENT
+
+BEGIN:VEVENT
+SUMMARY:🏆 Kaggle Competition Final Model Submission
+DTSTART:20261022T170000Z
+DTEND:20261022T235959Z
+DESCRIPTION:Final submission of best Phase 13-16 vision-only models for Kaggle Knee MRI competition.
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-P1D
+ACTION:DISPLAY
+DESCRIPTION:URGENT: Kaggle Competition Final Submission Deadline
+END:VALARM
+END:VEVENT
+
+END:VCALENDAR
