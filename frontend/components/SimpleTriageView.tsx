@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
-  ChevronRight,
   Eye,
   EyeOff,
   FileText,
@@ -12,7 +11,6 @@ import {
   Layers,
   Sparkles,
   Upload,
-  Zap,
 } from 'lucide-react';
 
 interface PatientInfo {
@@ -88,19 +86,85 @@ export default function SimpleTriageView({
   modelName = 'Phase 1: 1-Plane Sagittal',
   onSwitchToAdvanced,
 }: SimpleTriageViewProps) {
-  const [showGradcam, setShowGradcam] = React.useState(true);
-  const [activeTab, setActiveTab] = React.useState<'summary' | 'patient'>('summary');
+  const [showGradcam, setShowGradcam] = useState(true);
+  const [activeTab, setActiveTab] = useState<'summary' | 'patient'>('summary');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isNormal = primaryDiagnosis.toLowerCase().includes('unremarkable') || primaryDiagnosis.toLowerCase().includes('normal');
-  const entries = Object.entries(pathologies).sort((a, b) => b[1] - a[1]);
-  const topPathologies = entries.slice(0, 3);
+  const isNormal = useMemo(() => {
+    const diagnosis = primaryDiagnosis.toLowerCase();
+    return diagnosis.includes('unremarkable') || diagnosis.includes('normal');
+  }, [primaryDiagnosis]);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      onUploadCustom(event.target.files[0]);
-    }
-  };
+  const topPathologies = useMemo(
+    () => Object.entries(pathologies).sort((a, b) => b[1] - a[1]).slice(0, 3),
+    [pathologies],
+  );
+
+  const heatmapStyle = useMemo(() => {
+    if (!gradcam) return null;
+    return {
+      left: `${gradcam.center_x * 100}%`,
+      top: `${gradcam.center_y * 100}%`,
+      transform: 'translate(-50%, -50%)',
+      width: `${gradcam.radius * 230}px`,
+      height: `${gradcam.radius * 230}px`,
+      opacity: 0.75,
+      background: isNormal
+        ? 'radial-gradient(circle, rgba(15,118,110,.75), transparent 80%)'
+        : 'radial-gradient(circle, rgba(159,18,57,.85), rgba(217,119,6,.5) 55%, transparent 80%)',
+    } as React.CSSProperties;
+  }, [gradcam, isNormal]);
+
+  const kneeSlice = useMemo(
+    () => (
+      <svg viewBox="0 0 200 200" className="h-full w-full max-h-[360px]">
+        <defs>
+          <radialGradient id="sim-marrow-x" cx="45%" cy="38%" r="68%">
+            <stop offset="0%" stopColor="#9ba3ae" />
+            <stop offset="55%" stopColor="#767e8a" />
+            <stop offset="100%" stopColor="#4d545e" />
+          </radialGradient>
+          <radialGradient id="sim-soft-x" cx="50%" cy="48%" r="62%">
+            <stop offset="0%" stopColor="#3b424d" />
+            <stop offset="62%" stopColor="#272d36" />
+            <stop offset="100%" stopColor="#0b0e13" />
+          </radialGradient>
+        </defs>
+
+        <rect width="200" height="200" fill="#04060a" />
+        <path
+          d="M58 0 C42 40 36 74 44 100 C36 130 42 170 56 200 L150 200 C162 170 166 130 156 100 C164 74 158 40 144 0 Z"
+          fill="url(#sim-soft-x)"
+        />
+        <path
+          d="M80 0 L80 66 C64 72 57 86 58 98 C59 112 76 122 98 121 C120 120 139 112 141 97 C143 84 136 71 120 66 L120 0 Z"
+          fill="url(#sim-marrow-x)"
+          stroke="#05070b"
+          strokeWidth="2"
+        />
+        <path
+          d="M60 140 C60 132 68 130 82 129 L120 129 C134 130 142 133 142 141 C142 160 134 180 132 200 L74 200 C72 180 60 160 60 140 Z"
+          fill="url(#sim-marrow-x)"
+          stroke="#05070b"
+          strokeWidth="2"
+        />
+
+        {!isNormal ? (
+          <ellipse cx="101" cy="114" rx="10" ry="8" fill="#9f1239" opacity="0.45" />
+        ) : null}
+      </svg>
+    ),
+    [isNormal],
+  );
+
+  const handleFileChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files && event.target.files[0]) {
+        onUploadCustom(event.target.files[0]);
+      }
+    },
+    [onUploadCustom],
+  );
 
   return (
     <div className="space-y-6 rise-in">
@@ -189,44 +253,12 @@ export default function SimpleTriageView({
             </div>
 
             <div className="relative aspect-square w-full bg-[#091318] flex items-center justify-center p-4">
-              <svg viewBox="0 0 200 200" className="h-full w-full max-h-[360px]">
-                <defs>
-                  <radialGradient id="sim-marrow-x" cx="45%" cy="38%" r="68%">
-                    <stop offset="0%" stopColor="#9ba3ae" />
-                    <stop offset="55%" stopColor="#767e8a" />
-                    <stop offset="100%" stopColor="#4d545e" />
-                  </radialGradient>
-                  <radialGradient id="sim-soft-x" cx="50%" cy="48%" r="62%">
-                    <stop offset="0%" stopColor="#3b424d" />
-                    <stop offset="62%" stopColor="#272d36" />
-                    <stop offset="100%" stopColor="#0b0e13" />
-                  </radialGradient>
-                </defs>
+              {kneeSlice}
 
-                <rect width="200" height="200" fill="#04060a" />
-                <path d="M58 0 C42 40 36 74 44 100 C36 130 42 170 56 200 L150 200 C162 170 166 130 156 100 C164 74 158 40 144 0 Z" fill="url(#sim-soft-x)" />
-                <path d="M80 0 L80 66 C64 72 57 86 58 98 C59 112 76 122 98 121 C120 120 139 112 141 97 C143 84 136 71 120 66 L120 0 Z" fill="url(#sim-marrow-x)" stroke="#05070b" strokeWidth="2" />
-                <path d="M60 140 C60 132 68 130 82 129 L120 129 C134 130 142 133 142 141 C142 160 134 180 132 200 L74 200 C72 180 60 160 60 140 Z" fill="url(#sim-marrow-x)" stroke="#05070b" strokeWidth="2" />
-
-                {!isNormal ? (
-                  <ellipse cx="101" cy="114" rx="10" ry="8" fill="#9f1239" opacity="0.45" />
-                ) : null}
-              </svg>
-
-              {gradcam && showGradcam && (
+              {heatmapStyle && showGradcam && (
                 <div
                   className="pointer-events-none absolute rounded-full blur-md"
-                  style={{
-                    left: `${gradcam.center_x * 100}%`,
-                    top: `${gradcam.center_y * 100}%`,
-                    transform: 'translate(-50%, -50%)',
-                    width: `${gradcam.radius * 230}px`,
-                    height: `${gradcam.radius * 230}px`,
-                    opacity: 0.75,
-                    background: isNormal
-                      ? 'radial-gradient(circle, rgba(15,118,110,.75), transparent 80%)'
-                      : 'radial-gradient(circle, rgba(159,18,57,.85), rgba(217,119,6,.5) 55%, transparent 80%)',
-                  }}
+                  style={heatmapStyle}
                 />
               )}
 

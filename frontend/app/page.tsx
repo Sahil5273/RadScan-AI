@@ -1,15 +1,31 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Header from '@/components/Header';
 import PatientBanner from '@/components/PatientBanner';
 import SampleSelector from '@/components/SampleSelector';
-import MriViewer from '@/components/MriViewer';
 import PathologyBreakdown from '@/components/PathologyBreakdown';
 import ReportGenerator from '@/components/ReportGenerator';
-import InteractiveTour from '@/components/InteractiveTour';
 import SimpleTriageView from '@/components/SimpleTriageView';
-import ModelComparisonView from '@/components/ModelComparisonView';
+
+const panelFallback = (
+  <div className="panel min-h-[280px] animate-pulse bg-surface-muted" aria-hidden="true" />
+);
+
+const MriViewer = dynamic(() => import('@/components/MriViewer'), {
+  ssr: false,
+  loading: () => <div className="panel min-h-[420px] animate-pulse bg-slate-900" aria-hidden="true" />,
+});
+
+const InteractiveTour = dynamic(() => import('@/components/InteractiveTour'), {
+  ssr: false,
+});
+
+const ModelComparisonView = dynamic(() => import('@/components/ModelComparisonView'), {
+  ssr: false,
+  loading: () => panelFallback,
+});
 
 export default function Home() {
   const [activeSampleId, setActiveSampleId] = useState<string>('sample-acl-tear');
@@ -126,7 +142,9 @@ export default function Home() {
         onSelectModel={handleSelectModel}
       />
 
-      <InteractiveTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
+      {isTourOpen && (
+        <InteractiveTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
+      )}
 
       <main className="mx-auto w-full max-w-[1680px] flex-1 space-y-3 p-3 sm:p-4">
         {currentView === 'models' ? (

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Columns2,
   Contrast,
@@ -71,7 +71,13 @@ function windowToFilter(level: number, width: number) {
 // Greyscale approximation of a sagittal knee MRI. Bone marrow renders bright
 // with a dark cortical rim, fluid renders bright, and the ACL band is drawn
 // intact or disrupted depending on the study.
-function KneeAnatomy({ isNormal, idPrefix }: { isNormal: boolean; idPrefix: string }) {
+const KneeAnatomy = React.memo(function KneeAnatomy({
+  isNormal,
+  idPrefix,
+}: {
+  isNormal: boolean;
+  idPrefix: string;
+}) {
   const marrow = `${idPrefix}-marrow`;
   const soft = `${idPrefix}-soft`;
   const grain = `${idPrefix}-grain`;
@@ -212,7 +218,7 @@ function KneeAnatomy({ isNormal, idPrefix }: { isNormal: boolean; idPrefix: stri
       <rect width="200" height="200" fill={`url(#${vignette})`} />
     </svg>
   );
-}
+});
 
 interface ViewportProps {
   label: string;
@@ -235,7 +241,7 @@ interface ViewportProps {
   onPin: (event: React.MouseEvent<HTMLDivElement>, study: string) => void;
 }
 
-function DicomViewport({
+const DicomViewport = React.memo(function DicomViewport({
   label,
   study,
   isNormal,
@@ -256,6 +262,33 @@ function DicomViewport({
   onPin,
 }: ViewportProps) {
   const orientation = ORIENTATION[plane] ?? ORIENTATION.sagittal;
+  const cssFilter = useMemo(() => windowToFilter(level, width), [level, width]);
+  const overlayStyle = useMemo(() => {
+    if (!gradcam) return null;
+    const size = gradcam.radius * (compact ? 190 : 260);
+    return {
+      left: `${gradcam.center_x * 100}%`,
+      top: `${gradcam.center_y * 100}%`,
+      transform: 'translate(-50%, -50%)',
+      width: `${size}px`,
+      height: `${size}px`,
+      opacity: opacity * currentIntensity,
+      background: isNormal
+        ? 'radial-gradient(circle, rgba(6,118,71,.75), rgba(6,118,71,.12) 70%, transparent)'
+        : 'radial-gradient(circle, rgba(217,45,32,.92), rgba(247,144,9,.6) 52%, transparent 82%)',
+    } as React.CSSProperties;
+  }, [gradcam, compact, opacity, currentIntensity, isNormal]);
+  const crosshairStyle = useMemo(
+    () =>
+      gradcam
+        ? ({
+            left: `${gradcam.center_x * 100}%`,
+            top: `${gradcam.center_y * 100}%`,
+            transform: 'translate(-50%, -50%)',
+          } as React.CSSProperties)
+        : undefined,
+    [gradcam],
+  );
 
   return (
     <div
@@ -291,36 +324,16 @@ function DicomViewport({
         className={`relative aspect-square overflow-hidden transition-[filter] duration-150 ${
           compact ? 'h-[86%]' : 'h-[92%]'
         }`}
-        style={{ filter: windowToFilter(level, width) }}
+        style={{ filter: cssFilter }}
       >
         <KneeAnatomy isNormal={isNormal} idPrefix={`mri-${study}`} />
 
-        {gradcam && showGradcam && (
-          <div
-            className="pointer-events-none absolute rounded-full blur-lg"
-            style={{
-              left: `${gradcam.center_x * 100}%`,
-              top: `${gradcam.center_y * 100}%`,
-              transform: 'translate(-50%, -50%)',
-              width: `${gradcam.radius * (compact ? 190 : 260)}px`,
-              height: `${gradcam.radius * (compact ? 190 : 260)}px`,
-              opacity: opacity * currentIntensity,
-              background: isNormal
-                ? 'radial-gradient(circle, rgba(6,118,71,.75), rgba(6,118,71,.12) 70%, transparent)'
-                : 'radial-gradient(circle, rgba(217,45,32,.92), rgba(247,144,9,.6) 52%, transparent 82%)',
-            }}
-          />
+        {gradcam && showGradcam && overlayStyle && (
+          <div className="pointer-events-none absolute rounded-full blur-lg" style={overlayStyle} />
         )}
 
         {gradcam && showGradcam && (
-          <div
-            className="pointer-events-none absolute"
-            style={{
-              left: `${gradcam.center_x * 100}%`,
-              top: `${gradcam.center_y * 100}%`,
-              transform: 'translate(-50%, -50%)',
-            }}
-          >
+          <div className="pointer-events-none absolute" style={crosshairStyle}>
             <Crosshair
               className={`h-7 w-7 ${isNormal ? 'text-emerald-300' : 'text-red-400'}`}
               strokeWidth={1.5}
@@ -373,9 +386,9 @@ function DicomViewport({
       )}
     </div>
   );
-}
+});
 
-export default function MriViewer({
+export default React.memo(function MriViewer({
   sampleId,
   gradcam,
   sliceCount = 24,
@@ -399,50 +412,72 @@ export default function MriViewer({
     setPendingPin(null);
   }, [keySliceIndex, sampleId]);
 
-  const sliceDiff = Math.abs(currentSlice - keySliceIndex);
-  const currentIntensity = gradcam ? Math.max(0.1, gradcam.intensity * (1 - sliceDiff * 0.12)) : 0;
+  const currentIntensity = useMemo(() => {
+    if (!gradcam) return 0;
+    const sliceDiff = Math.abs(currentSlice - keySliceIndex);
+    return Math.max(0.1, gradcam.intensity * (1 - sliceDiff * 0.12));
+  }, [gradcam, currentSlice, keySliceIndex]);
   const isKeySlice = currentSlice === keySliceIndex;
   const primaryStudy = compareMode ? 'acl' : sampleId;
 
-  const visibleAnnotations = (study: string) =>
-    annotations.filter(
-      (annotation) => annotation.slice === currentSlice && annotation.study === study,
-    );
+  const primaryAnnotations = useMemo(
+    () =>
+      annotations.filter(
+        (annotation) => annotation.slice === currentSlice && annotation.study === primaryStudy,
+      ),
+    [annotations, currentSlice, primaryStudy],
+  );
+  const normalAnnotations = useMemo(
+    () =>
+      annotations.filter(
+        (annotation) => annotation.slice === currentSlice && annotation.study === 'normal',
+      ),
+    [annotations, currentSlice],
+  );
 
-  const handlePin = (event: React.MouseEvent<HTMLDivElement>, study: string) => {
-    if (!pinMode) return;
-    const bounds = event.currentTarget.getBoundingClientRect();
-    setPendingPin({
-      x: ((event.clientX - bounds.left) / bounds.width) * 100,
-      y: ((event.clientY - bounds.top) / bounds.height) * 100,
-      study,
-    });
-    setNoteDraft('');
-  };
+  const handlePin = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>, study: string) => {
+      if (!pinMode) return;
+      const bounds = event.currentTarget.getBoundingClientRect();
+      setPendingPin({
+        x: ((event.clientX - bounds.left) / bounds.width) * 100,
+        y: ((event.clientY - bounds.top) / bounds.height) * 100,
+        study,
+      });
+      setNoteDraft('');
+    },
+    [pinMode],
+  );
 
-  const saveAnnotation = (text: string = noteDraft) => {
-    if (!pendingPin || !text.trim()) return;
-    setAnnotations((items) => [
-      ...items,
-      {
-        id: Date.now(),
-        x: pendingPin.x,
-        y: pendingPin.y,
-        slice: currentSlice,
-        note: text.trim(),
-        study: pendingPin.study,
-      },
-    ]);
-    setPendingPin(null);
-    setNoteDraft('');
-  };
+  const saveAnnotation = useCallback(
+    (text: string = noteDraft) => {
+      if (!pendingPin || !text.trim()) return;
+      setAnnotations((items) => [
+        ...items,
+        {
+          id: Date.now(),
+          x: pendingPin.x,
+          y: pendingPin.y,
+          slice: currentSlice,
+          note: text.trim(),
+          study: pendingPin.study,
+        },
+      ]);
+      setPendingPin(null);
+      setNoteDraft('');
+    },
+    [pendingPin, noteDraft, currentSlice],
+  );
 
-  const applyPreset = (presetLevel: number, presetWidth: number) => {
+  const applyPreset = useCallback((presetLevel: number, presetWidth: number) => {
     setLevel(presetLevel);
     setWidth(presetWidth);
-  };
+  }, []);
 
-  const seriesLabel = `SE 2 · ${plane === 'sagittal' ? 'T2 FS' : plane === 'coronal' ? 'PD FS' : 'T1'}`;
+  const seriesLabel = useMemo(
+    () => `SE 2 · ${plane === 'sagittal' ? 'T2 FS' : plane === 'coronal' ? 'PD FS' : 'T1'}`,
+    [plane],
+  );
 
   return (
     <section className="panel flex h-full flex-col">
@@ -513,7 +548,7 @@ export default function MriViewer({
             currentSlice={currentSlice}
             sliceCount={sliceCount}
             seriesLabel={seriesLabel}
-            annotations={visibleAnnotations(primaryStudy)}
+            annotations={primaryAnnotations}
             pendingPin={pendingPin}
             pinMode={pinMode}
             compact={compareMode}
@@ -535,7 +570,7 @@ export default function MriViewer({
               currentSlice={currentSlice}
               sliceCount={sliceCount}
               seriesLabel={seriesLabel}
-              annotations={visibleAnnotations('normal')}
+              annotations={normalAnnotations}
               pendingPin={pendingPin}
               pinMode={pinMode}
               compact
@@ -714,4 +749,4 @@ export default function MriViewer({
       )}
     </section>
   );
-}
+});

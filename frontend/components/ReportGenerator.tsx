@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { Check, Copy, Download, FileText, RefreshCw, ShieldAlert, User } from 'lucide-react';
-import { jsPDF } from 'jspdf';
 
 interface ReportData {
   study_info: {
@@ -74,10 +73,12 @@ export default function ReportGenerator({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (!report) return;
 
-    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    try {
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const margin = 18;
     const contentWidth = pageWidth - margin * 2;
@@ -218,6 +219,9 @@ export default function ReportGenerator({
     );
     setDownloaded(true);
     setTimeout(() => setDownloaded(false), 2000);
+    } catch (error) {
+      console.error('Failed to generate PDF:', error);
+    }
   };
 
   return (
