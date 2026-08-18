@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -11,7 +11,7 @@ import {
   Info,
   Layers,
   Sparkles,
-  User,
+  Upload,
   Zap,
 } from 'lucide-react';
 
@@ -31,6 +31,30 @@ interface GradcamData {
   primary_target: string;
 }
 
+const CLINICAL_PRESETS = [
+  {
+    id: 'sample-acl-tear',
+    title: 'Sample 1: Acute ACL Tear',
+    subtitle: '28M · Right Knee T2 FS · Acute Pivot Shift',
+    chip: 'chip-critical',
+    label: 'ACL Tear 94%',
+  },
+  {
+    id: 'sample-meniscus-tear',
+    title: 'Sample 2: Meniscus Tear',
+    subtitle: '42F · Left Knee PD FS · Medial Pain',
+    chip: 'chip-moderate',
+    label: 'Medial Meniscus 91%',
+  },
+  {
+    id: 'sample-normal-knee',
+    title: 'Sample 3: Normal Knee',
+    subtitle: '31F · Right Knee T1/T2 · Routine Screening',
+    chip: 'chip-normal',
+    label: 'Unremarkable 96%',
+  },
+];
+
 interface SimpleTriageViewProps {
   sampleId: string;
   patientInfo: PatientInfo | null;
@@ -39,6 +63,9 @@ interface SimpleTriageViewProps {
   gradcam: GradcamData | null;
   findingsSummary?: string;
   report: any | null;
+  onSelectSample: (sampleId: string) => void;
+  onUploadCustom: (file: File) => void;
+  isLoadingPredict: boolean;
   onGenerateReport: () => void;
   isGeneratingReport: boolean;
   modelName?: string;
@@ -53,78 +80,99 @@ export default function SimpleTriageView({
   gradcam,
   findingsSummary,
   report,
+  onSelectSample,
+  onUploadCustom,
+  isLoadingPredict,
   onGenerateReport,
   isGeneratingReport,
   modelName = 'Phase 1: 1-Plane Sagittal',
   onSwitchToAdvanced,
 }: SimpleTriageViewProps) {
-  const [showGradcam, setShowGradcam] = useState(true);
-  const [activeTab, setActiveTab] = useState<'summary' | 'patient'>('summary');
+  const [showGradcam, setShowGradcam] = React.useState(true);
+  const [activeTab, setActiveTab] = React.useState<'summary' | 'patient'>('summary');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isNormal = primaryDiagnosis.toLowerCase().includes('unremarkable') || primaryDiagnosis.toLowerCase().includes('normal');
   const entries = Object.entries(pathologies).sort((a, b) => b[1] - a[1]);
   const topPathologies = entries.slice(0, 3);
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      onUploadCustom(event.target.files[0]);
+    }
+  };
+
   return (
     <div className="space-y-6 rise-in">
-      {/* Calming Mode Welcome Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-4 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--highlight)] text-[var(--accent-deep)] font-bold">
-            🌿
-          </div>
+      {/* Scenario Presets Selector Card (X-CDS Query Form Style) */}
+      <div id="tour-case-selector" className="panel p-5 bg-[var(--panel)]">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div>
-            <div className="text-xs font-bold tracking-wider text-[var(--accent-deep)] uppercase">
-              Simple Triage Mode
-            </div>
-            <p className="text-xs text-[var(--muted)] mt-0.5">
-              Streamlined clinical view with minimal cognitive load for fast patient assessment.
-            </p>
+            <span className="field-label text-[var(--accent-deep)]">Clinical Presets & Scenario Entry</span>
+            <h3 className="text-lg font-bold text-[var(--ink)] font-display">
+              Select Patient Scan Scenario
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".dcm,.dicom,.png,.jpg,.jpeg"
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoadingPredict}
+              className="btn btn-primary"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              Upload Custom DICOM
+            </button>
+
+            <button
+              onClick={onSwitchToAdvanced}
+              className="btn"
+            >
+              Advanced Workstation &rarr;
+            </button>
           </div>
         </div>
 
-        <button
-          onClick={onSwitchToAdvanced}
-          className="rounded-xl border border-[var(--line)] bg-white/80 px-3.5 py-2 text-xs font-semibold text-[var(--accent-deep)] transition hover:border-[var(--accent)] hover:bg-white flex items-center gap-1.5"
-        >
-          Open Advanced PACS Workstation
-          <ChevronRight className="h-3.5 w-3.5" />
-        </button>
+        {/* Preset Pill Buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {CLINICAL_PRESETS.map((preset) => {
+            const isActive = sampleId === preset.id;
+            return (
+              <button
+                key={preset.id}
+                onClick={() => !isLoadingPredict && onSelectSample(preset.id)}
+                disabled={isLoadingPredict}
+                className={`rounded-2xl border p-3.5 text-left transition-all ${
+                  isActive
+                    ? 'border-[var(--accent)] bg-[var(--highlight)] shadow-sm ring-1 ring-[var(--accent)]'
+                    : 'border-[var(--line)] bg-white/70 hover:bg-white hover:border-[var(--accent)]'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-[var(--ink)] font-display truncate">
+                    {preset.title}
+                  </span>
+                  <span className={`chip ${preset.chip} text-[9px]`}>{preset.label}</span>
+                </div>
+                <p className="text-[11px] text-[var(--muted)] mt-1 truncate">
+                  {preset.subtitle}
+                </p>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Left Column: Key MRI Preview & Patient Overview */}
-        <div className="space-y-5 lg:col-span-5">
-          {/* Patient Overview */}
-          <div className="panel p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <span className="field-label">Patient Case</span>
-                <h2 className="text-xl text-[var(--ink)] font-display mt-0.5">
-                  ANONYMISED, PATIENT
-                </h2>
-                <p className="data-mono text-xs text-[var(--muted)] mt-1">
-                  {patientInfo?.age || 30}Y {patientInfo?.gender || 'Unknown'} · {patientInfo?.study_description || 'Knee MRI'}
-                </p>
-              </div>
-              <span className={`chip ${isNormal ? 'chip-normal' : 'chip-critical'}`}>
-                {isNormal ? 'Unremarkable' : 'Priority Read'}
-              </span>
-            </div>
-
-            <div className="mt-4 border-t border-[var(--line)] pt-3 grid grid-cols-2 gap-3 text-xs">
-              <div>
-                <span className="field-label block">Study Date</span>
-                <span className="font-semibold text-[var(--ink)]">{patientInfo?.acquisition_date || '—'}</span>
-              </div>
-              <div>
-                <span className="field-label block">Engine</span>
-                <span className="font-semibold text-[var(--accent-deep)] truncate block">{modelName}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Key Image Preview */}
+        {/* Left Column: Key MRI Preview */}
+        <div id="tour-mri-viewport" className="space-y-5 lg:col-span-5">
           <div className="panel overflow-hidden">
             <div className="panel-header">
               <div className="flex items-center gap-2">
@@ -136,7 +184,7 @@ export default function SimpleTriageView({
                 className={`btn ${showGradcam ? 'btn-active' : ''}`}
               >
                 {showGradcam ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                Heatmap
+                Lesion Heatmap
               </button>
             </div>
 
@@ -189,10 +237,10 @@ export default function SimpleTriageView({
           </div>
         </div>
 
-        {/* Right Column: Calming AI Answer & Clinical Impression */}
+        {/* Right Column: AI Triage Conclusion & Report Drawer */}
         <div className="space-y-5 lg:col-span-7">
           {/* Primary AI Conclusion Card */}
-          <div className="panel p-6">
+          <div id="tour-triage-summary" className="panel p-6">
             <div className="field-label mb-1">Primary Triage Finding</div>
             <div className="flex items-start gap-3">
               {isNormal ? (
@@ -252,7 +300,7 @@ export default function SimpleTriageView({
           </div>
 
           {/* Calming Clinical Report Card */}
-          <div className="panel">
+          <div id="tour-clinical-report" className="panel">
             <div className="panel-header">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-[var(--accent)]" />

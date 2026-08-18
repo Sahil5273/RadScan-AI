@@ -4,7 +4,7 @@ RSNA Knee MRI Abnormality Detection (N = 58 Human Gold Validation Cohort)
 
 Model 1: Phase 1 — 1-Plane (Sagittal) ResNet-18 + BiGRU (Public LB: 0.784 | Gold Val AUC: 0.7488) - Pure DICOM Triage
 Model 2: Phase 4 — 3-Plane (Sag + Cor + Ax) ResNet-18 + BiGRU (Public LB: 0.782 | Gold Val AUC: 0.7699) - Multi-Planar Vision
-Model 3: Phase 3 — Multimodal Text-Vision Oracle (Gold Val AUC: 0.944 | 10% Image + 90% Text Report Blend) - Audit & Verification
+Model 3: Phase 3 — Multimodal Text-Vision Oracle (ACL Gold AUC: 0.944 | 10% Image + 90% Text Report Blend) - Audit & Verification
 """
 import math
 import numpy as np
@@ -38,7 +38,7 @@ class DiagnosticModelEngine:
             "training_dataset": "RSNA Knee MRI Dataset (224x224x24 Slices)",
             "best_for": "Unread DICOM triage for ACL tears (0.885 AUC) & Baker cysts (0.949 AUC)",
             "overall_auc": 0.7488,
-            "kaggle_score": 0.784,
+            "kaggle_score": "0.784 LB",
             "mode_type": "Pure Vision Triage",
             "pros": [
                 "Highest solo Kaggle Public Leaderboard score (0.784 LB)",
@@ -74,7 +74,7 @@ class DiagnosticModelEngine:
             "training_dataset": "RSNA Knee MRI Dataset (224x224x32 Extended Slices)",
             "best_for": "Highest Gold Validation AUC (0.7699) & Meniscal / Fracture multi-plane alignment",
             "overall_auc": 0.7699,
-            "kaggle_score": 0.782,
+            "kaggle_score": "0.782 LB",
             "mode_type": "Pure Vision Triage",
             "pros": [
                 "Highest Gold Human-Annotated Validation AUC (0.7699 Gold Val N=58)",
@@ -108,13 +108,13 @@ class DiagnosticModelEngine:
             "latency_ms": 28,
             "gpu_memory": "2.8 GB",
             "training_dataset": "RSNA Multimodal Benchmark (Images + Draft Radiology Reports)",
-            "best_for": "Retrospective audit, clinical verification & maximum overall accuracy (0.944 AUC)",
-            "overall_auc": 0.944,
-            "kaggle_score": 0.944,
+            "best_for": "Retrospective audit, clinical verification & maximum ACL detection (0.944 AUC)",
+            "overall_auc": 0.852,
+            "kaggle_score": "N/A (Text Needed)",
             "mode_type": "Multimodal Audit & Oracle",
             "pros": [
-                "Highest overall benchmark performance across all 12 targets (0.944 Gold AUC)",
-                "ACL Tear accuracy: 0.944 AUC (95.8% Recall / 91.4% Accuracy)",
+                "Highest ACL Tear accuracy: 0.944 AUC (95.8% Recall / 91.4% Accuracy)",
+                "Baker Cyst detection: 0.909 AUC / 97.8% Specificity",
                 "Ideal for auditing existing report drafts and resolving ambiguous scans"
             ],
             "cons": [
@@ -157,7 +157,7 @@ class DiagnosticModelEngine:
             "status": "success",
             "model_id": selected_model,
             "model_name": model_meta["name"],
-            "model_version": f"{model_meta['short_name']} (Mode: {model_meta['mode_type']} | Gold: {model_meta['overall_auc']} AUC)",
+            "model_version": f"{model_meta['short_name']} (Mode: {model_meta['mode_type']})",
             "latency_ms": model_meta["latency_ms"],
             "device": self.device,
             "sample_id": sample_id,
@@ -210,7 +210,7 @@ class DiagnosticModelEngine:
             "status": "success",
             "model_id": selected_model,
             "model_name": model_meta["name"],
-            "model_version": f"{model_meta['short_name']} (Mode: {model_meta['mode_type']} | Gold: {model_meta['overall_auc']} AUC)",
+            "model_version": f"{model_meta['short_name']} (Mode: {model_meta['mode_type']})",
             "latency_ms": model_meta["latency_ms"],
             "device": self.device,
             "filename": filename,
@@ -253,7 +253,6 @@ class DiagnosticModelEngine:
             if "Fracture" in adjusted and adjusted["Fracture"] > 0.20:
                 adjusted["Fracture"] = min(0.95, round(adjusted["Fracture"] * 1.15, 2))
         elif model_id == "phase3-multimodal-oracle":
-            # Phase 3 Multimodal Oracle boosts confidence on all confirmed positive targets
             for k, v in adjusted.items():
                 if v >= 0.35:
                     adjusted[k] = min(0.99, round(v * 1.08, 2))

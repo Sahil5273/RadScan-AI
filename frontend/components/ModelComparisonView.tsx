@@ -27,7 +27,7 @@ interface ModelMeta {
   training_dataset: string;
   best_for: string;
   overall_auc: number;
-  kaggle_score: number;
+  kaggle_score: string;
   mode_type: string;
   pros: string[];
   cons: string[];
@@ -48,7 +48,7 @@ const DEFAULT_MODELS: ModelMeta[] = [
     training_dataset: 'RSNA Knee MRI Dataset (224x224x24 Slices)',
     best_for: 'Unread DICOM triage for ACL tears (0.885 AUC) & Baker cysts (0.949 AUC)',
     overall_auc: 0.7488,
-    kaggle_score: 0.784,
+    kaggle_score: '0.784 LB',
     mode_type: 'Pure Vision Triage',
     pros: [
       'Highest solo Kaggle Public Leaderboard score (0.784 LB)',
@@ -84,7 +84,7 @@ const DEFAULT_MODELS: ModelMeta[] = [
     training_dataset: 'RSNA Knee MRI Dataset (224x224x32 Extended Slices)',
     best_for: 'Highest Gold Validation AUC (0.7699) & Meniscal / Fracture multi-plane alignment',
     overall_auc: 0.7699,
-    kaggle_score: 0.782,
+    kaggle_score: '0.782 LB',
     mode_type: 'Pure Vision Triage',
     pros: [
       'Highest Gold Human-Annotated Validation AUC (0.7699 Gold Val N=58)',
@@ -118,13 +118,13 @@ const DEFAULT_MODELS: ModelMeta[] = [
     latency_ms: 28,
     gpu_memory: '2.8 GB',
     training_dataset: 'RSNA Multimodal Benchmark (Images + Draft Radiology Reports)',
-    best_for: 'Retrospective audit, clinical verification & maximum overall accuracy (0.944 AUC)',
-    overall_auc: 0.944,
-    kaggle_score: 0.944,
+    best_for: 'Retrospective audit, clinical verification & maximum ACL detection (0.944 AUC)',
+    overall_auc: 0.852,
+    kaggle_score: 'N/A (Text Needed)',
     mode_type: 'Multimodal Audit & Oracle',
     pros: [
-      'Highest overall benchmark performance across all 12 targets (0.944 Gold AUC)',
-      'ACL Tear accuracy: 0.944 AUC (95.8% Recall / 91.4% Accuracy)',
+      'Highest ACL Tear accuracy: 0.944 AUC (95.8% Recall / 91.4% Accuracy)',
+      'Baker Cyst detection: 0.909 AUC / 97.8% Specificity',
       'Ideal for auditing existing report drafts and resolving ambiguous scans',
     ],
     cons: [
@@ -166,22 +166,22 @@ export default function ModelComparisonView({
   const pathologyKeys = Object.keys(modelA.label_performance);
 
   return (
-    <div className="space-y-4">
+    <div id="tour-model-comparison" className="space-y-5 rise-in">
       {/* Header Banner */}
-      <div className="panel p-4">
+      <div className="panel p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-clinical-600" />
-              <h2 className="text-lg font-bold text-slate-900">RSNA Knee MRI Clinical Benchmarks</h2>
+              <BarChart3 className="h-5 w-5 text-[var(--accent)]" />
+              <h2 className="text-xl font-bold text-[var(--ink)] font-display">RSNA Knee MRI Clinical Benchmarks</h2>
               <span className="chip chip-neutral">N = 58 Gold Human Validation Cohort</span>
             </div>
-            <p className="mt-1 text-xs leading-relaxed text-slate-600 max-w-3xl">
+            <p className="mt-1 text-xs leading-relaxed text-[var(--muted)] max-w-3xl">
               Comparative statistics across 3 model architectures: Pure Vision Triage (Phase 1 & Phase 4) vs Multimodal Text-Vision Oracle (Phase 3).
             </p>
           </div>
 
-          <div className="flex items-center gap-2 border-l border-surface-border pl-4">
+          <div className="flex items-center gap-2 border-l border-[var(--line)] pl-4">
             <span className="field-label">Active Model:</span>
             <span className="chip chip-info font-bold">
               {DEFAULT_MODELS.find((m) => m.id === selectedModelId)?.short_name || modelA.short_name}
@@ -191,7 +191,7 @@ export default function ModelComparisonView({
       </div>
 
       {/* Side-by-Side Model Specs */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         {DEFAULT_MODELS.map((model) => {
           const isSelected = selectedModelId === model.id;
 
@@ -199,21 +199,21 @@ export default function ModelComparisonView({
             <div
               key={model.id}
               className={`panel transition-all flex flex-col justify-between ${
-                isSelected ? 'ring-2 ring-clinical-600 border-clinical-500' : ''
+                isSelected ? 'ring-2 ring-[var(--accent)] border-[var(--accent)]' : ''
               }`}
             >
               <div>
                 <div className="panel-header">
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-clinical-700 flex items-center gap-1">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--accent-deep)] flex items-center gap-1">
                       {model.mode_type === 'Multimodal Audit & Oracle' ? (
                         <Sparkles className="h-3 w-3 text-amber-600" />
                       ) : (
-                        <Eye className="h-3 w-3 text-clinical-600" />
+                        <Eye className="h-3 w-3 text-[var(--accent)]" />
                       )}
                       {model.mode_type}
                     </div>
-                    <h3 className="text-xs font-bold text-slate-900 leading-snug">{model.name}</h3>
+                    <h3 className="text-xs font-bold text-[var(--ink)] leading-snug font-display">{model.name}</h3>
                   </div>
                   {isSelected ? (
                     <span className="chip chip-normal shrink-0">
@@ -230,13 +230,13 @@ export default function ModelComparisonView({
                   )}
                 </div>
 
-                <div className="p-3 space-y-2.5">
-                  <div className="grid grid-cols-2 gap-2 text-[11px] border-b border-surface-border pb-2.5">
+                <div className="p-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-2 text-[11px] border-b border-[var(--line)] pb-3">
                     <div>
                       <span className="field-label flex items-center gap-1 text-[9px]">
                         <Cpu className="h-3 w-3" /> Architecture
                       </span>
-                      <span className="font-semibold text-slate-800 truncate block mt-0.5" title={model.architecture}>
+                      <span className="font-semibold text-[var(--ink)] truncate block mt-0.5" title={model.architecture}>
                         {model.architecture}
                       </span>
                     </div>
@@ -244,7 +244,7 @@ export default function ModelComparisonView({
                       <span className="field-label flex items-center gap-1 text-[9px]">
                         <Clock className="h-3 w-3" /> Latency
                       </span>
-                      <span className="data-mono font-bold text-slate-900 mt-0.5 block">
+                      <span className="data-mono font-bold text-[var(--ink)] mt-0.5 block">
                         {model.latency_ms} ms / scan
                       </span>
                     </div>
@@ -252,7 +252,7 @@ export default function ModelComparisonView({
                       <span className="field-label flex items-center gap-1 text-[9px]">
                         <Database className="h-3 w-3" /> Gold Val AUC
                       </span>
-                      <span className="data-mono font-bold text-slate-800 mt-0.5 block">
+                      <span className="data-mono font-bold text-[var(--ink)] mt-0.5 block">
                         {model.overall_auc.toFixed(4)} AUC
                       </span>
                     </div>
@@ -260,15 +260,15 @@ export default function ModelComparisonView({
                       <span className="field-label flex items-center gap-1 text-[9px]">
                         <Activity className="h-3 w-3" /> Public LB
                       </span>
-                      <span className="data-mono font-bold text-clinical-700 mt-0.5 block">
-                        {model.kaggle_score} LB Score
+                      <span className="data-mono font-bold text-[var(--accent-deep)] mt-0.5 block">
+                        {model.kaggle_score}
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <span className="field-label text-slate-500 block mb-1 text-[9px]">Clinical Assessment</span>
-                    <p className="text-[11px] font-semibold text-slate-800 bg-clinical-50/60 rounded p-1.5 border border-clinical-100 leading-snug">
+                    <span className="field-label text-[var(--muted)] block mb-1 text-[9px]">Clinical Assessment</span>
+                    <p className="text-[11px] font-semibold text-[var(--ink)] bg-[var(--highlight)] rounded-xl p-2 border border-[#99f6e4] leading-snug">
                       {model.best_for}
                     </p>
                   </div>
@@ -279,7 +279,7 @@ export default function ModelComparisonView({
                       <span className="field-label text-emerald-800 font-bold block mb-0.5 text-[9px]">Strengths</span>
                       <ul className="space-y-1">
                         {model.pros.map((pro) => (
-                          <li key={pro} className="flex items-start gap-1.5 text-slate-700 leading-snug">
+                          <li key={pro} className="flex items-start gap-1.5 text-[var(--ink)] leading-snug">
                             <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0 mt-0.5" />
                             <span>{pro}</span>
                           </li>
@@ -291,7 +291,7 @@ export default function ModelComparisonView({
                       <span className="field-label text-amber-800 font-bold block mb-0.5 text-[9px]">Trade-offs</span>
                       <ul className="space-y-1">
                         {model.cons.map((con) => (
-                          <li key={con} className="flex items-start gap-1.5 text-slate-600 leading-snug">
+                          <li key={con} className="flex items-start gap-1.5 text-[var(--muted)] leading-snug">
                             <AlertCircle className="h-3 w-3 text-amber-600 shrink-0 mt-0.5" />
                             <span>{con}</span>
                           </li>
@@ -310,7 +310,7 @@ export default function ModelComparisonView({
       <div className="panel">
         <div className="panel-header flex-wrap">
           <div className="flex items-center gap-2">
-            <Layers className="h-4 w-4 text-clinical-600" />
+            <Layers className="h-4 w-4 text-[var(--accent)]" />
             <h3 className="panel-title">12 Knee Pathology Target Statistics Across All Models</h3>
           </div>
 
@@ -348,11 +348,11 @@ export default function ModelComparisonView({
         <div className="overflow-x-auto">
           <table className="w-full min-w-[850px] border-collapse text-left text-xs">
             <thead>
-              <tr className="border-b border-surface-border bg-surface-muted">
-                <th className="field-label px-3 py-2.5">Pathology Attribute</th>
-                <th className="field-label px-3 py-2.5">Phase 1 Sagittal ({filterMetric.toUpperCase()})</th>
-                <th className="field-label px-3 py-2.5">Phase 4 3-Plane ({filterMetric.toUpperCase()})</th>
-                <th className="field-label px-3 py-2.5">Phase 3 Multimodal ({filterMetric.toUpperCase()})</th>
+              <tr className="border-b border-[var(--line)] bg-[var(--panel-strong)]">
+                <th className="field-label px-4 py-3">Pathology Attribute</th>
+                <th className="field-label px-4 py-3">Phase 1 Sagittal ({filterMetric.toUpperCase()})</th>
+                <th className="field-label px-4 py-3">Phase 4 3-Plane ({filterMetric.toUpperCase()})</th>
+                <th className="field-label px-4 py-3">Phase 3 Multimodal ({filterMetric.toUpperCase()})</th>
               </tr>
             </thead>
             <tbody>
@@ -362,42 +362,42 @@ export default function ModelComparisonView({
                 const valC = modelC.label_performance[target][filterMetric];
 
                 return (
-                  <tr key={target} className="border-b border-surface-border hover:bg-surface-muted/50">
-                    <td className="px-3 py-2.5 font-semibold text-slate-800">{target}</td>
-                    <td className="px-3 py-2.5">
+                  <tr key={target} className="border-b border-[var(--line)] hover:bg-white/50">
+                    <td className="px-4 py-3 font-semibold text-[var(--ink)]">{target}</td>
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="data-mono font-bold text-slate-900 w-11 text-[11px]">
+                        <span className="data-mono font-bold text-[var(--ink)] w-11 text-xs">
                           {(valA * 100).toFixed(1)}%
                         </span>
-                        <div className="h-1.5 w-24 bg-slate-100 rounded-sm overflow-hidden">
+                        <div className="h-1.5 w-24 bg-slate-200/80 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-clinical-600 rounded-sm"
+                            className="h-full bg-[var(--accent)] rounded-full"
                             style={{ width: `${valA * 100}%` }}
                           />
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-2.5">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="data-mono font-bold text-slate-900 w-11 text-[11px]">
+                        <span className="data-mono font-bold text-[var(--ink)] w-11 text-xs">
                           {(valB * 100).toFixed(1)}%
                         </span>
-                        <div className="h-1.5 w-24 bg-slate-100 rounded-sm overflow-hidden">
+                        <div className="h-1.5 w-24 bg-slate-200/80 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-clinical-800 rounded-sm"
+                            className="h-full bg-teal-800 rounded-full"
                             style={{ width: `${valB * 100}%` }}
                           />
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-2.5">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="data-mono font-bold text-emerald-800 w-11 text-[11px]">
+                        <span className="data-mono font-bold text-emerald-800 w-11 text-xs">
                           {(valC * 100).toFixed(1)}%
                         </span>
-                        <div className="h-1.5 w-24 bg-slate-100 rounded-sm overflow-hidden">
+                        <div className="h-1.5 w-24 bg-slate-200/80 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-emerald-600 rounded-sm"
+                            className="h-full bg-emerald-600 rounded-full"
                             style={{ width: `${valC * 100}%` }}
                           />
                         </div>
@@ -412,13 +412,13 @@ export default function ModelComparisonView({
       </div>
 
       {/* Clinical Guidance Box */}
-      <div className="panel p-4 bg-clinical-50/50 border-clinical-200">
+      <div className="panel p-5 bg-[var(--highlight)]/40 border-[#99f6e4]">
         <div className="flex items-start gap-3">
-          <HelpCircle className="h-5 w-5 text-clinical-700 shrink-0 mt-0.5" />
-          <div className="text-xs leading-relaxed text-slate-700">
-            <h4 className="font-bold text-slate-900 text-sm mb-1">Why Phase 1 & Phase 4 were selected for unread DICOM triage</h4>
-            <p>
-              When a new MRI scan arrives from the DICOM scanner, <strong className="text-slate-900">no radiology report exists yet</strong>. Therefore, <strong className="text-slate-900">Phase 1</strong> (0.784 LB) and <strong className="text-slate-900">Phase 4</strong> (0.7699 Gold Val) are used for instant computer vision triage on raw unread DICOM volumes. <strong className="text-slate-900">Phase 3</strong> (0.944 Gold AUC) is an Oracle model used for retrospective verification and quality auditing when draft text reports are available.
+          <HelpCircle className="h-5 w-5 text-[var(--accent-deep)] shrink-0 mt-0.5" />
+          <div className="text-xs leading-relaxed text-[var(--muted)]">
+            <h4 className="font-bold text-[var(--ink)] text-sm mb-1 font-display">Why Phase 1 & Phase 4 were selected for unread DICOM triage</h4>
+            <p className="text-[var(--ink)]">
+              When a new MRI scan arrives from the DICOM scanner, <strong className="text-[var(--accent-deep)]">no radiology report exists yet</strong>. Therefore, <strong className="text-[var(--accent-deep)]">Phase 1</strong> (0.784 LB) and <strong className="text-[var(--accent-deep)]">Phase 4</strong> (0.7699 Gold Val) are used for instant computer vision triage on raw unread DICOM volumes. <strong className="text-[var(--accent-deep)]">Phase 3</strong> is a Multimodal Oracle model used for retrospective verification and quality auditing when draft text reports are available.
             </p>
           </div>
         </div>

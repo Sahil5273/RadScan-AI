@@ -138,31 +138,25 @@ export default function Home() {
             }}
           />
         ) : uiMode === 'simple' ? (
-          <div className="space-y-3">
-            <SampleSelector
-              activeSampleId={activeSampleId}
-              onSelectSample={(id) => {
-                setActiveSampleId(id);
-                fetchPrediction(id, selectedModel);
-              }}
-              onUploadCustom={handleUploadCustom}
-              isLoading={isLoadingPredict}
-            />
-
-            <SimpleTriageView
-              sampleId={activeSampleId}
-              patientInfo={predictionData?.patient_info || null}
-              primaryDiagnosis={predictionData?.primary_diagnosis || ''}
-              pathologies={predictionData?.pathologies || {}}
-              gradcam={predictionData?.gradcam || null}
-              findingsSummary={predictionData?.findings_summary}
-              report={reportData}
-              onGenerateReport={() => fetchReport()}
-              isGeneratingReport={isLoadingReport}
-              modelName={predictionData?.model_name || '2.5D Volumetric CNN-BiGRU'}
-              onSwitchToAdvanced={() => setUiMode('advanced')}
-            />
-          </div>
+          <SimpleTriageView
+            sampleId={activeSampleId}
+            patientInfo={predictionData?.patient_info || null}
+            primaryDiagnosis={predictionData?.primary_diagnosis || ''}
+            pathologies={predictionData?.pathologies || {}}
+            gradcam={predictionData?.gradcam || null}
+            findingsSummary={predictionData?.findings_summary}
+            report={reportData}
+            onSelectSample={(id) => {
+              setActiveSampleId(id);
+              fetchPrediction(id, selectedModel);
+            }}
+            onUploadCustom={handleUploadCustom}
+            isLoadingPredict={isLoadingPredict}
+            onGenerateReport={() => fetchReport()}
+            isGeneratingReport={isLoadingReport}
+            modelName={predictionData?.model_name || 'Phase 1: 1-Plane Sagittal'}
+            onSwitchToAdvanced={() => setUiMode('advanced')}
+          />
         ) : (
           /* Advanced PACS Workstation View */
           <div className="space-y-3">

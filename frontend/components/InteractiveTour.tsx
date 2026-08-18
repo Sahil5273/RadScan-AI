@@ -1,67 +1,49 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
-  Columns2,
-  Contrast,
-  FileText,
-  ListChecks,
-  MapPin,
-  X,
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 
-interface TourStep {
+export interface TourStep {
+  targetId: string;
   title: string;
-  summary: string;
-  detail: string;
-  icon: React.ElementType;
+  description: string;
 }
 
 const TOUR_STEPS: TourStep[] = [
   {
-    title: 'Study worklist',
-    summary: 'Select a study to load into the viewer',
-    detail:
-      'The worklist lists unread studies with priority, accession number, protocol and the AI triage flag. Selecting a row loads the series and runs analysis. External studies can be brought in with Import DICOM study.',
-    icon: ClipboardList,
+    targetId: 'tour-portal-header',
+    title: 'Welcome to RadScan AI!',
+    description:
+      'RadScan AI is an explainable decision support copilot for knee MRI triage. It combines multi-planar computer vision with Vertex AI Gemini report generation.',
   },
   {
-    title: 'Window level and width',
-    summary: 'Adjust greyscale rendering',
-    detail:
-      'Window level sets the midpoint of the displayed intensity range and window width sets its span. Narrow the width to increase tissue contrast. Presets are provided for soft tissue, bone and fluid-sensitive review, and Reset restores the study default.',
-    icon: Contrast,
+    targetId: 'tour-case-selector',
+    title: 'Clinical Scenario Presets & Study Selection',
+    description:
+      'Select 1-click test cases (ACL Tear, Meniscus Tear, Normal Knee) or upload custom DICOM files for instant evaluation.',
   },
   {
-    title: 'Annotations',
-    summary: 'Mark and describe a location',
-    detail:
-      'Enable Annotate, then click anywhere on the image to drop a marker. Enter the finding description and save. Annotations are bound to the specific image number and are listed in the annotation register beneath the viewport.',
-    icon: MapPin,
+    targetId: 'tour-mri-viewport',
+    title: 'Interactive MRI Slice Viewer & Grad-CAM',
+    description:
+      'Inspect MRI slice sequences. Toggle the Grad-CAM visual explainability heatmap to overlay red/yellow lesion coordinates directly onto anatomy.',
   },
   {
-    title: 'Comparison view',
-    summary: 'Review against a normal reference',
-    detail:
-      'Compare opens a second synchronised viewport showing a normal reference knee. Series navigation and windowing apply to both viewports simultaneously so anatomy can be assessed side by side.',
-    icon: Columns2,
+    targetId: 'tour-triage-summary',
+    title: 'Primary Diagnosis & Key Risk Indicators',
+    description:
+      'Review primary AI conclusions and pathology probabilities across target attributes evaluated against validated clinical operating thresholds.',
   },
   {
-    title: 'AI analysis panel',
-    summary: 'Probabilities across 12 targets',
-    detail:
-      'Targets are grouped as positive, indeterminate or negative against a 70% operating threshold, shown as a vertical marker on each bar. These probabilities are decision support only and do not constitute a diagnosis.',
-    icon: ListChecks,
+    targetId: 'tour-clinical-report',
+    title: 'Vertex AI Gemini Clinical Report & Patient Portal',
+    description:
+      'Generate structured radiology reports (Examination, Findings, Impression, Recommendations) and plain-language patient portal summaries exportable to PDF.',
   },
   {
-    title: 'Structured reporting',
-    summary: 'Draft, review and export',
-    detail:
-      'The draft compiles examination, technique, findings, impression and recommendations, with a plain-language patient summary on a separate tab. Reports export to PDF with an attestation block and remain preliminary until signed by a radiologist.',
-    icon: FileText,
+    targetId: 'tour-model-selector',
+    title: 'Dual Engine Selection & RSNA Benchmarks',
+    description:
+      'Switch between Phase 1 Sagittal Triage (0.784 LB) and Phase 4 3-Plane Fusion (0.7699 Gold Val) or inspect the 12-target benchmark comparison matrix.',
   },
 ];
 
@@ -71,78 +53,131 @@ interface InteractiveTourProps {
 }
 
 export default function InteractiveTour({ isOpen, onClose }: InteractiveTourProps) {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [coords, setCoords] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
-  if (!isOpen) return null;
+  // Reset step index when opened
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStepIndex(0);
+    }
+  }, [isOpen]);
 
-  const step = TOUR_STEPS[currentStep];
-  const StepIcon = step.icon;
-  const isFirst = currentStep === 0;
-  const isLast = currentStep === TOUR_STEPS.length - 1;
+  // Dynamically calculate target element coordinates & smooth scroll into view
+  useEffect(() => {
+    if (!isOpen || TOUR_STEPS.length === 0) return;
 
-  const handleNext = () => {
-    if (isLast) onClose();
-    else setCurrentStep(currentStep + 1);
+    const updateCoords = () => {
+      const step = TOUR_STEPS[currentStepIndex];
+      const target = document.getElementById(step.targetId);
+      if (target) {
+        const rect = target.getBoundingClientRect();
+        setCoords({
+          top: rect.top + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+          height: rect.height,
+        });
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        setCoords(null);
+      }
+    };
+
+    updateCoords();
+    window.addEventListener('resize', updateCoords);
+    window.addEventListener('scroll', updateCoords);
+
+    return () => {
+      window.removeEventListener('resize', updateCoords);
+      window.removeEventListener('scroll', updateCoords);
+    };
+  }, [isOpen, currentStepIndex]);
+
+  if (!isOpen || TOUR_STEPS.length === 0) return null;
+
+  const currentStep = TOUR_STEPS[currentStepIndex];
+
+  // Viewport-fixed bottom-center floating popup position
+  const popupStyle: React.CSSProperties = {
+    position: 'fixed',
+    bottom: '40px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: 'calc(100% - 32px)',
+    maxWidth: '420px',
   };
 
-  const handlePrevious = () => {
-    if (!isFirst) setCurrentStep(currentStep - 1);
+  const handleNext = () => {
+    if (currentStepIndex < TOUR_STEPS.length - 1) {
+      setCurrentStepIndex((prev) => prev + 1);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex((prev) => prev - 1);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="w-full max-w-2xl overflow-hidden rounded-md border border-surface-border bg-white shadow-overlay">
-        <div className="flex items-center justify-between border-b border-surface-border bg-clinical-900 px-4 py-3 text-white">
-          <div>
-            <h2 className="text-sm font-semibold">Using the RadScan AI workspace</h2>
-            <p className="text-[11px] text-clinical-200">
-              Step {currentStep + 1} of {TOUR_STEPS.length}
-            </p>
-          </div>
+    <div className="absolute inset-0 pointer-events-none z-[9999]">
+      {/* Dynamic spotlight cutout with smooth pulse glow ring & dimming backdrop */}
+      {coords ? (
+        <div
+          className="absolute z-[10000] rounded-2xl border border-[var(--accent)] pointer-events-none transition-all duration-300 shadow-[0_0_0_9999px_rgba(15,23,42,0.65),0_0_20px_rgba(20,184,166,0.45)]"
+          style={{
+            top: coords.top - 6,
+            left: coords.left - 6,
+            width: coords.width + 12,
+            height: coords.height + 12,
+          }}
+        />
+      ) : (
+        <div className="fixed inset-0 z-[10000] bg-slate-900/65 pointer-events-auto" />
+      )}
+
+      {/* Popover content card */}
+      <div
+        style={popupStyle}
+        className="z-[10001] pointer-events-auto rounded-2xl border border-[var(--line)] bg-white/95 p-5 shadow-2xl backdrop-blur-md transition-all duration-300 ease-out rise-in"
+      >
+        <header className="mb-2 flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--accent-deep)]">
+            Step {currentStepIndex + 1} of {TOUR_STEPS.length}
+          </span>
           <button
             onClick={onClose}
-            className="rounded p-1 transition-colors hover:bg-white/10"
-            aria-label="Close"
+            className="text-[var(--muted)] hover:text-[var(--ink)] text-xs font-semibold"
           >
-            <X className="h-4 w-4" />
+            Skip
           </button>
-        </div>
+        </header>
 
-        <div className="flex gap-4 px-5 py-5">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded bg-clinical-50 text-clinical-700 ring-1 ring-inset ring-clinical-200">
-            <StepIcon className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-base font-semibold text-slate-900">{step.title}</h3>
-            <p className="text-xs font-medium text-clinical-700">{step.summary}</p>
-            <p className="mt-2.5 text-[13px] leading-relaxed text-slate-700">{step.detail}</p>
-          </div>
-        </div>
+        <h4 className="text-base font-bold text-[var(--ink)] mb-1 font-display">
+          {currentStep.title}
+        </h4>
+        <p className="text-xs leading-relaxed text-[var(--muted)] mb-4">
+          {currentStep.description}
+        </p>
 
-        <div className="flex items-center justify-between border-t border-surface-border bg-surface-muted px-4 py-3">
-          <button onClick={handlePrevious} disabled={isFirst} className="btn">
-            <ChevronLeft className="h-3.5 w-3.5" />
-            Previous
+        <footer className="flex items-center justify-between border-t border-[var(--line)] pt-3">
+          <button
+            onClick={handleBack}
+            disabled={currentStepIndex === 0}
+            className="rounded-xl px-3 py-1.5 text-xs font-semibold text-[var(--muted)] hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent"
+          >
+            &larr; Back
           </button>
-
-          <div className="flex items-center gap-1.5">
-            {TOUR_STEPS.map((tourStep, index) => (
-              <button
-                key={tourStep.title}
-                onClick={() => setCurrentStep(index)}
-                aria-label={`Go to step ${index + 1}`}
-                className={`h-1.5 rounded-full transition-all ${
-                  index === currentStep ? 'w-5 bg-clinical-600' : 'w-1.5 bg-surface-strong'
-                }`}
-              />
-            ))}
-          </div>
-
-          <button onClick={handleNext} className="btn btn-primary">
-            {isLast ? 'Close' : 'Next'}
-            {!isLast && <ChevronRight className="h-3.5 w-3.5" />}
+          <button
+            onClick={handleNext}
+            className="rounded-xl bg-[var(--accent)] px-4 py-1.5 text-xs font-bold text-white transition hover:bg-[var(--accent-deep)]"
+          >
+            {currentStepIndex === TOUR_STEPS.length - 1 ? 'Finish ✨' : 'Next \u2192'}
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   );

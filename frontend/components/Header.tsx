@@ -33,7 +33,7 @@ export default function Header({
   onSelectModel,
 }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-md border-b border-[var(--line)] bg-[var(--panel)]">
+    <header id="tour-portal-header" className="sticky top-0 z-40 backdrop-blur-md border-b border-[var(--line)] bg-[var(--panel)]">
       {/* Editorial Identity Bar */}
       <div className="border-b border-[var(--line)] px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-[1680px] items-center justify-between gap-4">
@@ -59,7 +59,7 @@ export default function Header({
           {/* Right Controls: Engine Selector & Mode Toggle */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Model Selector Dropdown */}
-            <div className="hidden items-center gap-1.5 rounded-xl border border-[var(--line)] bg-white/70 px-3 py-1.5 text-xs font-semibold text-[var(--ink)] md:flex shadow-sm">
+            <div id="tour-model-selector" className="hidden items-center gap-1.5 rounded-xl border border-[var(--line)] bg-white/70 px-3 py-1.5 text-xs font-semibold text-[var(--ink)] md:flex shadow-sm">
               <Cpu className="h-3.5 w-3.5 text-[var(--accent)] shrink-0" />
               <span className="text-[11px] text-[var(--muted)] hidden lg:inline">Engine:</span>
               <select
