@@ -55,61 +55,71 @@ export default function SimpleTriageView({
   report,
   onGenerateReport,
   isGeneratingReport,
-  modelName = '2.5D Volumetric CNN-BiGRU',
+  modelName = 'Phase 1: 1-Plane Sagittal',
   onSwitchToAdvanced,
 }: SimpleTriageViewProps) {
   const [showGradcam, setShowGradcam] = useState(true);
   const [activeTab, setActiveTab] = useState<'summary' | 'patient'>('summary');
 
-  const isNormal = primaryDiagnosis.toLowerCase().includes('normal');
+  const isNormal = primaryDiagnosis.toLowerCase().includes('unremarkable') || primaryDiagnosis.toLowerCase().includes('normal');
   const entries = Object.entries(pathologies).sort((a, b) => b[1] - a[1]);
-  const topPathologies = entries.filter(([name]) => name !== 'Normal Joint').slice(0, 4);
+  const topPathologies = entries.slice(0, 3);
 
   return (
-    <div className="space-y-4">
-      {/* Top Banner Notice */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-clinical-200 bg-clinical-50/70 p-3 text-xs text-clinical-900">
-        <div className="flex items-center gap-2">
-          <Zap className="h-4 w-4 text-clinical-600 shrink-0" />
-          <span>
-            <strong className="font-semibold">Simple Triage Mode:</strong> Streamlined clinical view showing high-level findings and report summary.
-          </span>
+    <div className="space-y-6 rise-in">
+      {/* Calming Mode Welcome Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--line)] bg-[var(--panel)] p-4 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--highlight)] text-[var(--accent-deep)] font-bold">
+            🌿
+          </div>
+          <div>
+            <div className="text-xs font-bold tracking-wider text-[var(--accent-deep)] uppercase">
+              Simple Triage Mode
+            </div>
+            <p className="text-xs text-[var(--muted)] mt-0.5">
+              Streamlined clinical view with minimal cognitive load for fast patient assessment.
+            </p>
+          </div>
         </div>
+
         <button
           onClick={onSwitchToAdvanced}
-          className="inline-flex items-center gap-1 font-semibold text-clinical-700 hover:text-clinical-900 hover:underline"
+          className="rounded-xl border border-[var(--line)] bg-white/80 px-3.5 py-2 text-xs font-semibold text-[var(--accent-deep)] transition hover:border-[var(--accent)] hover:bg-white flex items-center gap-1.5"
         >
-          Switch to Advanced PACS Workstation
+          Open Advanced PACS Workstation
           <ChevronRight className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {/* Left Column: Key Image Preview & Case Info */}
-        <div className="space-y-4 lg:col-span-6 xl:col-span-5">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        {/* Left Column: Key MRI Preview & Patient Overview */}
+        <div className="space-y-5 lg:col-span-5">
           {/* Patient Overview */}
-          <div className="panel p-4">
+          <div className="panel p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="field-label">Patient Case</div>
-                <h2 className="text-base font-bold text-slate-900">ANONYMISED, PATIENT</h2>
-                <p className="data-mono text-xs text-slate-500 mt-0.5">
+                <span className="field-label">Patient Case</span>
+                <h2 className="text-xl text-[var(--ink)] font-display mt-0.5">
+                  ANONYMISED, PATIENT
+                </h2>
+                <p className="data-mono text-xs text-[var(--muted)] mt-1">
                   {patientInfo?.age || 30}Y {patientInfo?.gender || 'Unknown'} · {patientInfo?.study_description || 'Knee MRI'}
                 </p>
               </div>
               <span className={`chip ${isNormal ? 'chip-normal' : 'chip-critical'}`}>
-                {isNormal ? 'Unremarkable' : 'Priority Case'}
+                {isNormal ? 'Unremarkable' : 'Priority Read'}
               </span>
             </div>
 
-            <div className="mt-3 border-t border-surface-border pt-3 grid grid-cols-2 gap-3 text-xs">
+            <div className="mt-4 border-t border-[var(--line)] pt-3 grid grid-cols-2 gap-3 text-xs">
               <div>
                 <span className="field-label block">Study Date</span>
-                <span className="font-semibold text-slate-800">{patientInfo?.acquisition_date || '—'}</span>
+                <span className="font-semibold text-[var(--ink)]">{patientInfo?.acquisition_date || '—'}</span>
               </div>
               <div>
-                <span className="field-label block">Active AI Model</span>
-                <span className="font-semibold text-clinical-700 truncate block">{modelName}</span>
+                <span className="field-label block">Engine</span>
+                <span className="font-semibold text-[var(--accent-deep)] truncate block">{modelName}</span>
               </div>
             </div>
           </div>
@@ -118,7 +128,7 @@ export default function SimpleTriageView({
           <div className="panel overflow-hidden">
             <div className="panel-header">
               <div className="flex items-center gap-2">
-                <Layers className="h-4 w-4 text-clinical-600" />
+                <Layers className="h-4 w-4 text-[var(--accent)]" />
                 <h3 className="panel-title">Key MRI Slice</h3>
               </div>
               <button
@@ -126,19 +136,19 @@ export default function SimpleTriageView({
                 className={`btn ${showGradcam ? 'btn-active' : ''}`}
               >
                 {showGradcam ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                Lesion Heatmap
+                Heatmap
               </button>
             </div>
 
-            <div className="relative aspect-square w-full bg-slate-950 flex items-center justify-center p-4">
-              <svg viewBox="0 0 200 200" className="h-full w-full max-h-[380px]">
+            <div className="relative aspect-square w-full bg-[#091318] flex items-center justify-center p-4">
+              <svg viewBox="0 0 200 200" className="h-full w-full max-h-[360px]">
                 <defs>
-                  <radialGradient id="sim-marrow" cx="45%" cy="38%" r="68%">
+                  <radialGradient id="sim-marrow-x" cx="45%" cy="38%" r="68%">
                     <stop offset="0%" stopColor="#9ba3ae" />
                     <stop offset="55%" stopColor="#767e8a" />
                     <stop offset="100%" stopColor="#4d545e" />
                   </radialGradient>
-                  <radialGradient id="sim-soft" cx="50%" cy="48%" r="62%">
+                  <radialGradient id="sim-soft-x" cx="50%" cy="48%" r="62%">
                     <stop offset="0%" stopColor="#3b424d" />
                     <stop offset="62%" stopColor="#272d36" />
                     <stop offset="100%" stopColor="#0b0e13" />
@@ -146,12 +156,12 @@ export default function SimpleTriageView({
                 </defs>
 
                 <rect width="200" height="200" fill="#04060a" />
-                <path d="M58 0 C42 40 36 74 44 100 C36 130 42 170 56 200 L150 200 C162 170 166 130 156 100 C164 74 158 40 144 0 Z" fill="url(#sim-soft)" />
-                <path d="M80 0 L80 66 C64 72 57 86 58 98 C59 112 76 122 98 121 C120 120 139 112 141 97 C143 84 136 71 120 66 L120 0 Z" fill="url(#sim-marrow)" stroke="#05070b" strokeWidth="2" />
-                <path d="M60 140 C60 132 68 130 82 129 L120 129 C134 130 142 133 142 141 C142 160 134 180 132 200 L74 200 C72 180 60 160 60 140 Z" fill="url(#sim-marrow)" stroke="#05070b" strokeWidth="2" />
+                <path d="M58 0 C42 40 36 74 44 100 C36 130 42 170 56 200 L150 200 C162 170 166 130 156 100 C164 74 158 40 144 0 Z" fill="url(#sim-soft-x)" />
+                <path d="M80 0 L80 66 C64 72 57 86 58 98 C59 112 76 122 98 121 C120 120 139 112 141 97 C143 84 136 71 120 66 L120 0 Z" fill="url(#sim-marrow-x)" stroke="#05070b" strokeWidth="2" />
+                <path d="M60 140 C60 132 68 130 82 129 L120 129 C134 130 142 133 142 141 C142 160 134 180 132 200 L74 200 C72 180 60 160 60 140 Z" fill="url(#sim-marrow-x)" stroke="#05070b" strokeWidth="2" />
 
                 {!isNormal ? (
-                  <ellipse cx="101" cy="114" rx="10" ry="8" fill="#d92d20" opacity="0.4" />
+                  <ellipse cx="101" cy="114" rx="10" ry="8" fill="#9f1239" opacity="0.45" />
                 ) : null}
               </svg>
 
@@ -162,48 +172,48 @@ export default function SimpleTriageView({
                     left: `${gradcam.center_x * 100}%`,
                     top: `${gradcam.center_y * 100}%`,
                     transform: 'translate(-50%, -50%)',
-                    width: `${gradcam.radius * 240}px`,
-                    height: `${gradcam.radius * 240}px`,
+                    width: `${gradcam.radius * 230}px`,
+                    height: `${gradcam.radius * 230}px`,
                     opacity: 0.75,
                     background: isNormal
-                      ? 'radial-gradient(circle, rgba(6,118,71,.75), transparent 80%)'
-                      : 'radial-gradient(circle, rgba(217,45,32,.85), rgba(247,144,9,.5) 55%, transparent 80%)',
+                      ? 'radial-gradient(circle, rgba(15,118,110,.75), transparent 80%)'
+                      : 'radial-gradient(circle, rgba(159,18,57,.85), rgba(217,119,6,.5) 55%, transparent 80%)',
                   }}
                 />
               )}
 
-              <div className="absolute bottom-2 left-2 data-mono text-[10px] text-slate-400">
+              <div className="absolute bottom-3 left-3 data-mono text-[10px] text-slate-400">
                 Key Sagittal T2 Slice · 1.5T MRI
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column: AI Triage Summary & Report Drawer */}
-        <div className="space-y-4 lg:col-span-6 xl:col-span-7">
-          {/* Primary AI Findings Card */}
-          <div className="panel p-4">
-            <div className="field-label">AI Triage Conclusion</div>
-            <div className="mt-1.5 flex items-start gap-2.5">
+        {/* Right Column: Calming AI Answer & Clinical Impression */}
+        <div className="space-y-5 lg:col-span-7">
+          {/* Primary AI Conclusion Card */}
+          <div className="panel p-6">
+            <div className="field-label mb-1">Primary Triage Finding</div>
+            <div className="flex items-start gap-3">
               {isNormal ? (
-                <CheckCircle2 className="h-5 w-5 text-severity-normal shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-0.5" />
               ) : (
-                <AlertTriangle className="h-5 w-5 text-severity-critical shrink-0 mt-0.5" />
+                <AlertTriangle className="h-6 w-6 text-[var(--danger)] shrink-0 mt-0.5" />
               )}
               <div>
-                <h3 className={`text-base font-bold leading-snug ${isNormal ? 'text-emerald-900' : 'text-red-900'}`}>
+                <h3 className={`text-xl font-display leading-snug ${isNormal ? 'text-emerald-900' : 'text-rose-900'}`}>
                   {primaryDiagnosis}
                 </h3>
-                <p className="mt-1 text-xs text-slate-600 leading-relaxed">
-                  {findingsSummary || 'Multi-planar scan processed. Key pathological targets identified above clinical operating threshold.'}
+                <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">
+                  {findingsSummary || 'Processed across volumetric multi-slice series. Pathology indicators derived from validated RSNA benchmark checkpoints.'}
                 </p>
               </div>
             </div>
 
-            {/* Top Pathology Cards */}
-            <div className="mt-4 border-t border-surface-border pt-3">
-              <div className="field-label mb-2">Key Risk Indicators</div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {/* Key Pathology Indicators */}
+            <div className="mt-5 border-t border-[var(--line)] pt-4">
+              <div className="field-label mb-3">Key Risk Indicators</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {topPathologies.map(([name, probability]) => {
                   const percent = Math.round(probability * 100);
                   const isHigh = percent >= 70;
@@ -212,25 +222,25 @@ export default function SimpleTriageView({
                   return (
                     <div
                       key={name}
-                      className={`rounded border p-2.5 ${
+                      className={`rounded-xl border p-3 ${
                         isHigh
-                          ? 'border-red-200 bg-red-50/60'
+                          ? 'border-rose-200 bg-rose-50/50'
                           : isMod
                           ? 'border-amber-200 bg-amber-50/50'
-                          : 'border-slate-200 bg-slate-50'
+                          : 'border-[var(--line)] bg-white/60'
                       }`}
                     >
-                      <div className="text-[11px] font-semibold text-slate-800 truncate" title={name}>
+                      <div className="text-xs font-semibold text-[var(--ink)] truncate" title={name}>
                         {name}
                       </div>
-                      <div className={`data-mono text-base font-bold mt-1 ${
-                        isHigh ? 'text-red-700' : isMod ? 'text-amber-800' : 'text-slate-600'
+                      <div className={`data-mono text-lg font-bold mt-1 ${
+                        isHigh ? 'text-rose-800' : isMod ? 'text-amber-800' : 'text-[var(--muted)]'
                       }`}>
                         {percent}%
                       </div>
-                      <div className="mt-1 h-1 w-full rounded-full bg-slate-200 overflow-hidden">
+                      <div className="mt-2 h-1.5 w-full rounded-full bg-slate-200/80 overflow-hidden">
                         <div
-                          className={`h-full ${isHigh ? 'bg-severity-critical' : isMod ? 'bg-severity-moderate' : 'bg-slate-400'}`}
+                          className={`h-full ${isHigh ? 'bg-[var(--danger)]' : isMod ? 'bg-amber-600' : 'bg-[var(--accent)]'}`}
                           style={{ width: `${percent}%` }}
                         />
                       </div>
@@ -241,12 +251,12 @@ export default function SimpleTriageView({
             </div>
           </div>
 
-          {/* Quick Clinical Report Drawer */}
+          {/* Calming Clinical Report Card */}
           <div className="panel">
             <div className="panel-header">
               <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-clinical-600" />
-                <h3 className="panel-title">Clinical Report Summary</h3>
+                <FileText className="h-4 w-4 text-[var(--accent)]" />
+                <h3 className="panel-title">Clinical Impression & Patient Summary</h3>
               </div>
 
               <div className="flex items-center gap-2">
@@ -262,7 +272,7 @@ export default function SimpleTriageView({
                       data-active={activeTab === 'patient'}
                       onClick={() => setActiveTab('patient')}
                     >
-                      Patient Summary
+                      Patient Portal
                     </button>
                   </div>
                 ) : (
@@ -272,47 +282,47 @@ export default function SimpleTriageView({
                     className="btn btn-primary"
                   >
                     <Sparkles className={`h-3.5 w-3.5 ${isGeneratingReport ? 'animate-spin' : ''}`} />
-                    {isGeneratingReport ? 'Generating Report…' : 'Generate Summary'}
+                    {isGeneratingReport ? 'Synthesizing…' : 'Generate Summary'}
                   </button>
                 )}
               </div>
             </div>
 
-            <div className="p-4">
+            <div className="p-5">
               {report ? (
                 activeTab === 'summary' ? (
-                  <div className="space-y-3">
-                    <div className="rounded border-l-3 border-clinical-600 bg-clinical-50/70 p-3 text-xs leading-relaxed text-slate-800">
-                      <div className="field-label mb-1 text-clinical-700">Impression</div>
-                      <div className="whitespace-pre-line font-medium text-slate-900">{report.impression}</div>
+                  <div className="space-y-4">
+                    <div className="rounded-xl border-l-4 border-[var(--accent)] bg-[var(--highlight)] p-4 text-xs leading-relaxed text-[var(--ink)]">
+                      <div className="field-label mb-1 text-[var(--accent-deep)]">Impression</div>
+                      <div className="whitespace-pre-line font-medium text-[var(--ink)]">{report.impression}</div>
                     </div>
 
-                    <div className="text-xs text-slate-700">
-                      <strong className="font-semibold text-slate-900">Recommendations: </strong>
+                    <div className="text-xs text-[var(--muted)] leading-relaxed">
+                      <strong className="font-semibold text-[var(--ink)]">Recommendations: </strong>
                       {report.recommendations}
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded border border-surface-border bg-slate-50 p-3 text-xs leading-relaxed text-slate-700">
-                    <div className="field-label mb-1">Plain-Language Patient Breakdown</div>
-                    <p>{report.patient_summary}</p>
+                  <div className="rounded-xl border border-[var(--line)] bg-white/70 p-4 text-xs leading-relaxed text-[var(--muted)]">
+                    <div className="field-label mb-1.5 text-[var(--accent-deep)]">Plain-Language Patient Breakdown</div>
+                    <p className="text-[var(--ink)]">{report.patient_summary}</p>
                   </div>
                 )
               ) : (
-                <div className="text-center py-6 text-xs text-slate-500">
-                  Click <strong className="text-slate-700">Generate Summary</strong> to synthesize clinical findings with Vertex AI Gemini 1.5 Pro.
+                <div className="text-center py-8 text-xs text-[var(--muted)]">
+                  Click <strong className="text-[var(--accent-deep)]">Generate Summary</strong> to synthesize clinical findings with Vertex AI Gemini 1.5 Pro.
                 </div>
               )}
             </div>
 
-            <div className="border-t border-surface-border bg-surface-muted px-4 py-2 flex items-center justify-between text-[11px] text-slate-500">
-              <span className="flex items-center gap-1">
-                <Info className="h-3 w-3" />
+            <div className="border-t border-[var(--line)] bg-[var(--panel-strong)] px-5 py-3 flex items-center justify-between text-xs text-[var(--muted)]">
+              <span className="flex items-center gap-1.5">
+                <Info className="h-3.5 w-3.5 text-[var(--accent)]" />
                 Investigational decision support only.
               </span>
               <button
                 onClick={onSwitchToAdvanced}
-                className="font-semibold text-clinical-700 hover:underline"
+                className="font-semibold text-[var(--accent-deep)] hover:underline"
               >
                 Open Full Workstation Suite &rarr;
               </button>

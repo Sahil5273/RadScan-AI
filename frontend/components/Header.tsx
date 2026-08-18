@@ -8,8 +8,8 @@ import {
   HelpCircle,
   Lock,
   Monitor,
-  Settings,
   SlidersHorizontal,
+  Sparkles,
   Zap,
 } from 'lucide-react';
 
@@ -33,55 +33,60 @@ export default function Header({
   onSelectModel,
 }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-40">
-      {/* Institutional identity bar */}
-      <div className="bg-clinical-900 px-4 text-white sm:px-6">
-        <div className="mx-auto flex h-14 max-w-[1680px] items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 backdrop-blur-md border-b border-[var(--line)] bg-[var(--panel)]">
+      {/* Editorial Identity Bar */}
+      <div className="border-b border-[var(--line)] px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-[1680px] items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded bg-white/10 ring-1 ring-inset ring-white/20">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent)] text-white shadow-sm">
               <Activity className="h-5 w-5" strokeWidth={2.25} />
             </div>
-            <div className="leading-tight">
+            <div>
               <div className="flex items-center gap-2">
-                <span className="text-base font-semibold tracking-tight">RadScan AI</span>
-                <span className="hidden rounded-sm bg-white/10 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wider text-clinical-100 sm:inline">
-                  MSK MRI Copilot
+                <span className="text-xl font-bold tracking-tight text-[var(--ink)] font-display">
+                  RadScan AI
+                </span>
+                <span className="rounded-md bg-[var(--highlight)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--accent-deep)]">
+                  MSK MRI Decision Support
                 </span>
               </div>
-              <div className="hidden text-[11px] text-clinical-200 sm:block">
-                Department of Radiology · Clinical Decision Support
+              <div className="hidden text-xs text-[var(--muted)] sm:block">
+                Department of Radiology · Explainable Triage
               </div>
             </div>
           </div>
 
-          {/* Center & Right Controls: Model Selector & View Mode */}
+          {/* Right Controls: Engine Selector & Mode Toggle */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Model Selector Dropdown */}
-            <div className="hidden items-center gap-1.5 rounded border border-white/20 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white md:flex">
-              <Cpu className="h-3.5 w-3.5 text-clinical-200 shrink-0" />
-              <span className="text-[11px] text-clinical-200 hidden lg:inline">Engine:</span>
+            <div className="hidden items-center gap-1.5 rounded-xl border border-[var(--line)] bg-white/70 px-3 py-1.5 text-xs font-semibold text-[var(--ink)] md:flex shadow-sm">
+              <Cpu className="h-3.5 w-3.5 text-[var(--accent)] shrink-0" />
+              <span className="text-[11px] text-[var(--muted)] hidden lg:inline">Engine:</span>
               <select
                 value={selectedModel}
                 onChange={(e) => onSelectModel(e.target.value)}
-                className="bg-transparent text-xs font-semibold text-white outline-none cursor-pointer"
+                className="bg-transparent text-xs font-semibold text-[var(--accent-deep)] outline-none cursor-pointer"
               >
-                <option value="phase1-sagittal-resnet18" className="text-slate-900">
+                <option value="phase1-sagittal-resnet18">
                   Phase 1: 1-Plane Sagittal (0.784 LB)
                 </option>
-                <option value="phase4-3plane-resnet18" className="text-slate-900">
-                  Phase 4: 3-Plane Fusion (0.7699 Gold Val)
+                <option value="phase4-3plane-resnet18">
+                  Phase 4: 3-Plane Fusion (0.7699 Gold)
+                </option>
+                <option value="phase3-multimodal-oracle">
+                  Phase 3: Multimodal Oracle (0.944 Gold)
                 </option>
               </select>
             </div>
 
             {/* UI Mode Toggle (Simple vs Advanced) */}
-            <div className="flex items-center rounded border border-white/20 bg-white/10 p-0.5 text-xs font-semibold">
+            <div className="flex items-center rounded-xl border border-[var(--line)] bg-white/60 p-1 text-xs font-semibold">
               <button
                 onClick={() => onToggleUiMode('simple')}
-                className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] transition-colors ${
+                className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs transition ${
                   uiMode === 'simple'
-                    ? 'bg-white text-clinical-900 font-bold'
-                    : 'text-white/80 hover:text-white'
+                    ? 'bg-[var(--accent)] text-white font-bold shadow-sm'
+                    : 'text-[var(--muted)] hover:text-[var(--ink)]'
                 }`}
               >
                 <Zap className="h-3 w-3" />
@@ -89,10 +94,10 @@ export default function Header({
               </button>
               <button
                 onClick={() => onToggleUiMode('advanced')}
-                className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] transition-colors ${
+                className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs transition ${
                   uiMode === 'advanced'
-                    ? 'bg-white text-clinical-900 font-bold'
-                    : 'text-white/80 hover:text-white'
+                    ? 'bg-[var(--accent)] text-white font-bold shadow-sm'
+                    : 'text-[var(--muted)] hover:text-[var(--ink)]'
                 }`}
               >
                 <SlidersHorizontal className="h-3 w-3" />
@@ -100,59 +105,54 @@ export default function Header({
               </button>
             </div>
 
-            <div className="hidden items-center gap-1.5 rounded border border-white/15 bg-white/5 px-2 py-1 text-[11px] font-medium text-clinical-100 lg:flex">
-              <Lock className="h-3.5 w-3.5" />
-              De-identified
-            </div>
-
             {onOpenTour && (
               <button
                 onClick={onOpenTour}
-                className="inline-flex items-center gap-1.5 rounded border border-white/20 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/10"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--accent)] bg-[var(--highlight)] px-3 py-1.5 text-xs font-bold text-[var(--accent-deep)] transition hover:bg-[var(--accent)] hover:text-white"
               >
-                <HelpCircle className="h-4 w-4" />
+                <Sparkles className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Help</span>
               </button>
             )}
 
-            <div className="flex items-center gap-2 border-l border-white/15 pl-2 sm:pl-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-clinical-400 text-xs font-bold text-clinical-900">
+            <div className="flex items-center gap-2 border-l border-[var(--line)] pl-2 sm:pl-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--highlight)] text-xs font-bold text-[var(--accent-deep)] border border-[#99f6e4]">
                 AS
               </div>
               <div className="hidden leading-tight md:block">
-                <div className="text-xs font-semibold">Dr. A. Sharma, MD</div>
-                <div className="text-[11px] text-clinical-200">MSK Radiology</div>
+                <div className="text-xs font-semibold text-[var(--ink)]">Dr. A. Sharma, MD</div>
+                <div className="text-[11px] text-[var(--muted)]">MSK Radiology</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Module navigation bar */}
-      <nav className="border-b border-surface-border bg-white px-4 sm:px-6">
+      {/* Module Navigation Bar */}
+      <nav className="px-4 sm:px-6">
         <div className="mx-auto flex max-w-[1680px] items-center justify-between overflow-x-auto">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2 py-2">
             <button
               onClick={() => onChangeView('workspace')}
-              className={`inline-flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-xs font-semibold transition-colors ${
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition ${
                 currentView === 'workspace'
-                  ? 'border-clinical-600 text-clinical-700'
-                  : 'border-transparent text-slate-500 hover:border-surface-strong hover:text-slate-700'
+                  ? 'bg-[var(--accent)] text-white shadow-sm'
+                  : 'text-[var(--muted)] hover:bg-white/60 hover:text-[var(--ink)]'
               }`}
             >
               <Monitor className="h-4 w-4" />
               Diagnostic Workstation
-              <span className="chip chip-neutral text-[9px] uppercase ml-1">
+              <span className="chip chip-neutral text-[9px] uppercase ml-1 opacity-90">
                 {uiMode} Mode
               </span>
             </button>
 
             <button
               onClick={() => onChangeView('models')}
-              className={`inline-flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-xs font-semibold transition-colors ${
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition ${
                 currentView === 'models'
-                  ? 'border-clinical-600 text-clinical-700'
-                  : 'border-transparent text-slate-500 hover:border-surface-strong hover:text-slate-700'
+                  ? 'bg-[var(--accent)] text-white shadow-sm'
+                  : 'text-[var(--muted)] hover:bg-white/60 hover:text-[var(--ink)]'
               }`}
             >
               <BarChart3 className="h-4 w-4" />
@@ -163,8 +163,8 @@ export default function Header({
             </button>
           </div>
 
-          <div className="hidden items-center gap-2 py-2 text-xs text-slate-500 sm:flex">
-            <span>Model: <strong className="text-slate-800 font-semibold">{selectedModel === 'phase1-sagittal-resnet18' ? 'Phase 1 Sagittal (0.784 LB)' : 'Phase 4 3-Plane (0.7699 Gold)'}</strong></span>
+          <div className="hidden items-center gap-2 text-xs text-[var(--muted)] sm:flex">
+            <span>Selected Engine: <strong className="text-[var(--accent-deep)] font-bold">{selectedModel === 'phase1-sagittal-resnet18' ? 'Phase 1 Sagittal (0.784 LB)' : selectedModel === 'phase4-3plane-resnet18' ? 'Phase 4 3-Plane (0.7699 Gold)' : 'Phase 3 Multimodal (0.944 Gold)'}</strong></span>
           </div>
         </div>
       </nav>
