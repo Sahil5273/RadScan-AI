@@ -27,7 +27,7 @@ const ModelComparisonView = dynamic(() => import('@/components/ModelComparisonVi
   loading: () => panelFallback,
 });
 
-const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://radscan-ai-backend-388740016983.us-central1.run.app';
 
 export default function Home() {
   const [activeSampleId, setActiveSampleId] = useState<string>('sample-acl-tear');
