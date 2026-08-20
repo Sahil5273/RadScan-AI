@@ -3,7 +3,7 @@ FROM node:18-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-RUN apk add --no-libc6-compat
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
@@ -16,7 +16,13 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED 1
-RUN npm run build
+
+# NEXT_PUBLIC_* is inlined at build time, so the backend URL must be a build arg.
+# Setting it only as a Cloud Run runtime variable has no effect on client bundles.
+ARG NEXT_PUBLIC_BACKEND_URL
+ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
+
+RUN chmod -R +x node_modules/.bin && npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner

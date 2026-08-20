@@ -12,9 +12,8 @@ interface SampleSelectorProps {
 
 interface WorklistRow {
   id: string;
-  patient: string;
+  label: string;
   demographics: string;
-  accession: string;
   study: string;
   protocol: string;
   date: string;
@@ -26,9 +25,8 @@ interface WorklistRow {
 const WORKLIST: WorklistRow[] = [
   {
     id: 'sample-acl-tear',
-    patient: 'ANONYMISED, PATIENT A',
-    demographics: '28M',
-    accession: 'ACC-2026-04128',
+    label: 'Case 1',
+    demographics: '28 · Male',
     study: 'Right Knee MRI — Acute Pivot Shift Injury',
     protocol: 'Sagittal T2 FS',
     date: '2026-08-10',
@@ -38,9 +36,8 @@ const WORKLIST: WorklistRow[] = [
   },
   {
     id: 'sample-meniscus-tear',
-    patient: 'ANONYMISED, PATIENT B',
-    demographics: '42F',
-    accession: 'ACC-2026-04131',
+    label: 'Case 2',
+    demographics: '42 · Female',
     study: 'Left Knee MRI — Medial Joint Line Pain',
     protocol: 'Coronal / Sagittal PD',
     date: '2026-08-12',
@@ -50,9 +47,8 @@ const WORKLIST: WorklistRow[] = [
   },
   {
     id: 'sample-normal-knee',
-    patient: 'ANONYMISED, PATIENT C',
-    demographics: '31F',
-    accession: 'ACC-2026-04140',
+    label: 'Case 3',
+    demographics: '31 · Female',
     study: 'Right Knee MRI — Routine Screening',
     protocol: 'Multi-planar T1 / T2',
     date: '2026-08-14',
@@ -116,7 +112,7 @@ export default function SampleSelector({
         <table className="w-full min-w-[880px] border-collapse text-left">
           <thead>
             <tr className="border-b border-surface-border bg-white">
-              {['Priority', 'Patient', 'Accession', 'Study description', 'Protocol', 'Study date', 'AI triage', ''].map(
+              {['Priority', 'Case', 'Study description', 'Protocol', 'Study date', 'AI triage', ''].map(
                 (heading) => (
                   <th
                     key={heading}
@@ -149,11 +145,8 @@ export default function SampleSelector({
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-3 py-2.5">
-                    <div className="font-semibold text-slate-800">{row.patient}</div>
-                    <div className="data-mono text-[11px] text-slate-500">{row.demographics}</div>
-                  </td>
-                  <td className="data-mono whitespace-nowrap px-3 py-2.5 text-slate-600">
-                    {row.accession}
+                    <div className="font-semibold text-slate-800">{row.label}</div>
+                    <div className="text-[11px] text-slate-500">{row.demographics}</div>
                   </td>
                   <td className="px-3 py-2.5 text-slate-700">{row.study}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-slate-600">{row.protocol}</td>

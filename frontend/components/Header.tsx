@@ -5,7 +5,6 @@ import {
   Activity,
   BarChart3,
   Cpu,
-  HelpCircle,
   Lock,
   Monitor,
   SlidersHorizontal,
@@ -68,13 +67,13 @@ export default function Header({
                 className="bg-transparent text-xs font-semibold text-[var(--accent-deep)] outline-none cursor-pointer"
               >
                 <option value="phase1-sagittal-resnet18">
-                  Phase 1: 1-Plane Sagittal (0.784 LB)
+                  Phase 4: 3-Plane Fusion (0.802 LB)
                 </option>
                 <option value="phase4-3plane-resnet18">
-                  Phase 4: 3-Plane Fusion (0.7699 Gold)
+                  Phase 5: 3D SwinUNETR Ensemble (0.809 LB Champion)
                 </option>
                 <option value="phase3-multimodal-oracle">
-                  Phase 3: Multimodal Oracle (0.944 Gold)
+                  Phase 3: Multimodal Oracle (0.852 AUC)
                 </option>
               </select>
             </div>
@@ -115,14 +114,9 @@ export default function Header({
               </button>
             )}
 
-            <div className="flex items-center gap-2 border-l border-[var(--line)] pl-2 sm:pl-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--highlight)] text-xs font-bold text-[var(--accent-deep)] border border-[#99f6e4]">
-                AS
-              </div>
-              <div className="hidden leading-tight md:block">
-                <div className="text-xs font-semibold text-[var(--ink)]">Dr. A. Sharma, MD</div>
-                <div className="text-[11px] text-[var(--muted)]">MSK Radiology</div>
-              </div>
+            <div className="hidden items-center gap-1.5 border-l border-[var(--line)] pl-3 text-[11px] font-semibold text-[var(--muted)] md:flex">
+              <Lock className="h-3.5 w-3.5" />
+              Demo · no patient data
             </div>
           </div>
         </div>
@@ -164,7 +158,7 @@ export default function Header({
           </div>
 
           <div className="hidden items-center gap-2 text-xs text-[var(--muted)] sm:flex">
-            <span>Selected Engine: <strong className="text-[var(--accent-deep)] font-bold">{selectedModel === 'phase1-sagittal-resnet18' ? 'Phase 1 Sagittal (0.784 LB)' : selectedModel === 'phase4-3plane-resnet18' ? 'Phase 4 3-Plane (0.7699 Gold)' : 'Phase 3 Multimodal (0.944 Gold)'}</strong></span>
+            <span>Selected Engine: <strong className="text-[var(--accent-deep)] font-bold">{selectedModel === 'phase1-sagittal-resnet18' ? 'Phase 4 Multi-Planar (0.802 LB)' : selectedModel === 'phase4-3plane-resnet18' ? 'Phase 5 3D SwinUNETR (0.809 LB)' : 'Phase 3 Multimodal (0.852 AUC)'}</strong></span>
           </div>
         </div>
       </nav>

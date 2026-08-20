@@ -301,7 +301,7 @@ const DicomViewport = React.memo(function DicomViewport({
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between px-3 py-2">
         <div className="data-mono text-[10px] leading-4 text-slate-300">
           <div className="font-semibold uppercase tracking-wide text-white">{label}</div>
-          <div className="text-slate-400">ANONYMISED, PATIENT</div>
+          <div className="text-slate-400">De-identified</div>
         </div>
         <div className="data-mono text-right text-[10px] leading-4 text-slate-400">
           <div>{seriesLabel}</div>

@@ -3,10 +3,11 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
   async rewrites() {
+    const backend = (process.env.BACKEND_URL || 'http://localhost:8000').replace(/\/+$/, '')
     return [
       {
         source: '/api/:path*',
-        destination: process.env.BACKEND_URL || 'http://localhost:8000/api/:path*',
+        destination: `${backend}/api/:path*`,
       },
     ]
   },

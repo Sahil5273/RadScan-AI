@@ -1,6 +1,8 @@
 """
 RadScan AI Backend REST API
-Powered by FastAPI, PyTorch 2.5D Volumetric MRI Engine, and GCP Vertex AI Gemini 1.5 Pro.
+
+Serves benchmark-calibrated triage demo outputs and drafts structured reports via
+Vertex AI Gemini, falling back to a deterministic template when Vertex is unavailable.
 """
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,8 +26,8 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -40,9 +42,13 @@ def read_root():
     return {
         "app": settings.PROJECT_NAME,
         "status": "online",
-        "cloud": "GCP Cloud Run (L4 GPU Scale-to-Zero)",
-        "llm_engine": "Vertex AI Gemini 1.5 Pro",
-        "model": "2.5D Volumetric CNN-BiGRU (819k DICOM Trained)",
+        "compute": settings.COMPUTE_TARGET,
+        "llm_engine": (
+            f"Vertex AI {settings.VERTEX_AI_MODEL}"
+            if gemini_report_generator.initialized
+            else "Vertex AI unavailable - report drafting uses a deterministic template"
+        ),
+        "triage_engine": "Benchmark-calibrated demo engine (see /api/v1/models)",
         "docs": "/docs"
     }
 
@@ -51,9 +57,10 @@ def health_check():
     return {
         "status": "healthy",
         "backend": "FastAPI uvicorn",
-        "gcp_project": settings.GCP_PROJECT_ID,
-        "vertex_ai": "active",
-        "model_device": model_engine.device
+        "gcp_project": settings.GCP_PROJECT_ID or None,
+        "vertex_ai": "ready" if gemini_report_generator.initialized else "fallback",
+        "vertex_ai_error": gemini_report_generator.init_error,
+        "compute": settings.COMPUTE_TARGET
     }
 
 @app.get("/api/v1/samples")
@@ -76,14 +83,14 @@ def list_models():
 @app.post("/api/v1/predict")
 async def predict_mri(
     sample_id: Optional[str] = Form(None),
-    model_id: Optional[str] = Form("model-2.5d-bigru"),
+    model_id: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None)
 ):
     """
     Runs Volumetric MRI Inference & Grad-CAM Heatmap Generation using selected AI model.
     Accepts either a 1-click sample_id OR a custom DICOM file upload, plus optional model_id.
     """
-    target_model = model_id or "model-2.5d-bigru"
+    target_model = model_id or settings.DEFAULT_MODEL
     if sample_id:
         try:
             result = model_engine.predict_sample(sample_id, model_id=target_model)
@@ -101,7 +108,9 @@ async def predict_mri(
 @app.post("/api/v1/report")
 def generate_report(req: ReportRequest):
     """
-    Generates structured radiology clinical report and patient summary via Vertex AI Gemini 1.5 Pro.
+    Drafts a structured radiology report and patient summary from the model probabilities.
+    Uses Vertex AI Gemini when available; the response reports which path was taken via
+    the `engine` and `llm_generated` fields.
     """
     input_data = req.model_dump()
     report = gemini_report_generator.generate_report(input_data)

@@ -71,6 +71,7 @@ interface SimpleTriageViewProps {
   isGeneratingReport: boolean;
   modelName?: string;
   onSwitchToAdvanced: () => void;
+  customPreviewUrl?: string | null;
 }
 
 export default function SimpleTriageView({
@@ -88,6 +89,7 @@ export default function SimpleTriageView({
   isGeneratingReport,
   modelName = 'Phase 1: 1-Plane Sagittal',
   onSwitchToAdvanced,
+  customPreviewUrl,
 }: SimpleTriageViewProps) {
   const [showGradcam, setShowGradcam] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
@@ -202,7 +204,7 @@ export default function SimpleTriageView({
             {/* Real DICOM MRI Image Container */}
             <div className="relative aspect-square w-full bg-[#05070a] overflow-hidden flex items-center justify-center">
               <img
-                src="/mri_knee_sagittal.jpg"
+                src={customPreviewUrl || "/mri_knee_sagittal.jpg"}
                 alt="Clinical Knee MRI Scan"
                 className="h-full w-full object-contain"
               />
@@ -375,7 +377,7 @@ export default function SimpleTriageView({
                 )
               ) : (
                 <div className="text-center py-8 text-xs text-[var(--muted)]">
-                  Click <strong className="text-[var(--accent-deep)]">Generate Summary</strong> to synthesize clinical findings with Vertex AI Gemini 1.5 Pro.
+                  Click <strong className="text-[var(--accent-deep)]">Generate Summary</strong> to draft the clinical impression and patient summary from the model output.
                 </div>
               )}
             </div>

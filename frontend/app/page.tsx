@@ -27,8 +27,11 @@ const ModelComparisonView = dynamic(() => import('@/components/ModelComparisonVi
   loading: () => panelFallback,
 });
 
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://radscan-ai-backend-388740016983.us-central1.run.app';
+
 export default function Home() {
   const [activeSampleId, setActiveSampleId] = useState<string>('sample-acl-tear');
+  const [customPreviewUrl, setCustomPreviewUrl] = useState<string | null>(null);
   const [predictionData, setPredictionData] = useState<any>(null);
   const [reportData, setReportData] = useState<any>(null);
   const [isLoadingPredict, setIsLoadingPredict] = useState<boolean>(false);
@@ -43,12 +46,15 @@ export default function Home() {
   // Fetch prediction data when sample or model changes
   const fetchPrediction = async (sampleId: string, modelId: string = selectedModel) => {
     setIsLoadingPredict(true);
+    if (sampleId !== 'custom') {
+      setCustomPreviewUrl(null);
+    }
     try {
       const formData = new FormData();
       formData.append('sample_id', sampleId);
       formData.append('model_id', modelId);
 
-      const res = await fetch('/api/v1/predict', {
+      const res = await fetch(`${API_BASE}/api/v1/predict`, {
         method: 'POST',
         body: formData,
       });
@@ -72,15 +78,26 @@ export default function Home() {
   const handleUploadCustom = async (file: File) => {
     setIsLoadingPredict(true);
     setActiveSampleId('custom');
+    
+    // Create local object URL for instant visual preview
+    if (file.type.startsWith('image/') || file.name.endsWith('.dcm') || file.name.endsWith('.png') || file.name.endsWith('.jpg') || file.name.endsWith('.jpeg')) {
+      const objectUrl = URL.createObjectURL(file);
+      setCustomPreviewUrl(objectUrl);
+    }
+
     try {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('model_id', selectedModel);
 
-      const res = await fetch('/api/v1/predict', {
+      const res = await fetch(`${API_BASE}/api/v1/predict`, {
         method: 'POST',
         body: formData,
       });
+
+      if (!res.ok) {
+        throw new Error('Failed to upload custom file');
+      }
 
       const data = await res.json();
       setPredictionData(data);
@@ -99,11 +116,11 @@ export default function Home() {
 
     setIsLoadingReport(true);
     try {
-      const res = await fetch('/api/v1/report', {
+      const res = await fetch(`${API_BASE}/api/v1/report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sample_id: payload.sample_id,
+          sample_id: payload.sample_id || 'custom',
           primary_diagnosis: payload.primary_diagnosis,
           pathologies: payload.pathologies,
           patient_info: payload.patient_info,
@@ -158,6 +175,7 @@ export default function Home() {
         ) : uiMode === 'simple' ? (
           <SimpleTriageView
             sampleId={activeSampleId}
+            customPreviewUrl={customPreviewUrl}
             patientInfo={predictionData?.patient_info || null}
             primaryDiagnosis={predictionData?.primary_diagnosis || ''}
             pathologies={predictionData?.pathologies || {}}
@@ -179,7 +197,6 @@ export default function Home() {
           /* Advanced PACS Workstation View */
           <div className="space-y-3">
             <PatientBanner
-              sampleId={activeSampleId}
               patientInfo={predictionData?.patient_info || null}
               primaryDiagnosis={predictionData?.primary_diagnosis || ''}
               isLoading={isLoadingPredict}
@@ -239,7 +256,7 @@ export default function Home() {
             <span className="text-surface-strong">|</span>
             <span>Mode: {uiMode.toUpperCase()}</span>
             <span className="text-surface-strong">|</span>
-            <span>Engine: {selectedModel === 'model-2.5d-bigru' ? '2.5D CNN-BiGRU' : '3D SwinUNETR'}</span>
+            <span>Engine: {predictionData?.model_name ?? 'Loading…'}</span>
           </div>
         </div>
       </footer>

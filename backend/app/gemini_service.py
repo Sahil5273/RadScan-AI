@@ -1,116 +1,232 @@
 """
-Vertex AI Gemini 1.5 Pro Service
-Generates structured radiological reports, clinical findings, impressions, and patient summaries.
+Vertex AI Gemini report synthesis.
+
+Calls Gemini to draft the structured report. If Vertex AI is unavailable
+(missing credentials, unset project, quota, network), falls back to a
+deterministic template and reports that honestly via `llm_generated`.
 """
-import os
 import json
-from typing import Dict, Any
+import re
+from typing import Any, Dict, Optional
+
 from app.config import settings
 
+PROMPT = """You are assisting a musculoskeletal radiologist by drafting a preliminary \
+structured report for a knee MRI. A CNN triage model produced the per-pathology \
+probabilities below. Draft the report from those probabilities only. Do not invent \
+findings that are not supported by them.
+
+Study: {study}
+Technique: {technique}
+Patient: {age} / {gender}
+Model's leading finding: {primary}
+Per-pathology probabilities: {probabilities}
+
+Return strict JSON with exactly these keys and no others:
+{{
+  "impression": "numbered clinical impression, 1-3 items, radiology register",
+  "recommendations": "concrete next steps for the referring clinician",
+  "patient_summary": "2-3 sentences of plain language for a patient portal, no jargon"
+}}
+
+Treat probabilities below 0.35 as not reported. Never state certainty the \
+probabilities do not support: hedge with 'suggests' or 'probable' between 0.35 and 0.70. \
+Do not name a radiologist or sign the report."""
+
+
 class GeminiReportGenerator:
-    """
-    Handles clinical report synthesis powered by Vertex AI Gemini 1.5 Pro.
-    Formats findings into standardized DICOM radiology report sections.
-    """
+    """Drafts structured radiology reports via Vertex AI Gemini."""
 
     def __init__(self):
         self.project_id = settings.GCP_PROJECT_ID
         self.location = settings.GCP_LOCATION
         self.model_name = settings.VERTEX_AI_MODEL
-        self.initialized = False
+        self._client = None
+        self.init_error: Optional[str] = None
         self._init_vertex_ai()
 
-    def _init_vertex_ai(self):
-        """Attempts to initialize GCP Vertex AI SDK."""
+    @property
+    def initialized(self) -> bool:
+        return self._client is not None
+
+    def _init_vertex_ai(self) -> None:
+        if not settings.ENABLE_VERTEX_AI:
+            self.init_error = "disabled via ENABLE_VERTEX_AI"
+            return
+        if not self.project_id:
+            self.init_error = "GCP_PROJECT_ID is not set"
+            return
         try:
-            import google.auth
-            from google.cloud import aiplatform
-            aiplatform.init(project=self.project_id, location=self.location)
-            self.initialized = True
-            print(f"[RadScan AI] Vertex AI initialized successfully for project {self.project_id}.")
-        except Exception as e:
-            print(f"[RadScan AI] Vertex AI fallback mode active (GCP Credentials pending): {e}")
-            self.initialized = False
+            from google import genai
+
+            self._client = genai.Client(
+                vertexai=True, project=self.project_id, location=self.location
+            )
+            print(f"[RadScan AI] Vertex AI ready: {self.model_name} in {self.project_id}.")
+        except Exception as exc:
+            self.init_error = f"{type(exc).__name__}: {exc}"
+            print(f"[RadScan AI] Vertex AI unavailable, using template fallback ({self.init_error}).")
+
+    def _call_gemini(self, payload: Dict[str, Any]) -> Optional[Dict[str, str]]:
+        if self._client is None:
+            return None
+
+        prompt = PROMPT.format(
+            study=payload["study"],
+            technique=payload["technique"],
+            age=payload["age"],
+            gender=payload["gender"],
+            primary=payload["primary"],
+            probabilities=payload["probabilities"],
+        )
+
+        try:
+            response = self._client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config={
+                    "temperature": 0.2,
+                    "max_output_tokens": 1024,
+                    "response_mime_type": "application/json",
+                },
+            )
+            text = (response.text or "").strip()
+        except Exception as exc:
+            print(f"[RadScan AI] Gemini call failed: {type(exc).__name__}: {exc}")
+            return None
+
+        # Models often wrap JSON in a fenced block.
+        fenced = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
+        if fenced:
+            text = fenced.group(1).strip()
+
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError:
+            print("[RadScan AI] Gemini returned non-JSON output; falling back to template.")
+            return None
+
+        required = ("impression", "recommendations", "patient_summary")
+        if not all(isinstance(parsed.get(k), str) and parsed[k].strip() for k in required):
+            print("[RadScan AI] Gemini JSON missing required keys; falling back to template.")
+            return None
+
+        return {k: parsed[k].strip() for k in required}
+
+    @staticmethod
+    def _template_narrative(primary_diag: str) -> Dict[str, str]:
+        if "ACL Tear" in primary_diag:
+            return {
+                "impression": (
+                    "1. Findings suggest disruption of the anterior cruciate ligament. "
+                    "Correlation with clinical stability testing is advised.\n"
+                    "2. Associated joint effusion and bone marrow signal change, in keeping "
+                    "with an acute pivot-shift mechanism."
+                ),
+                "recommendations": (
+                    "Orthopaedic review for reconstruction candidacy, interim bracing, "
+                    "physiotherapy, and clinical stability assessment (Lachman, pivot shift)."
+                ),
+                "patient_summary": (
+                    "The scan suggests a tear of the ACL, the main stabilising ligament inside "
+                    "the knee. There is also fluid and some bruising of the bone within the joint. "
+                    "A review with an orthopaedic specialist is recommended."
+                ),
+            }
+        if "Meniscus Tear" in primary_diag:
+            return {
+                "impression": (
+                    "1. Findings suggest a tear of the posterior horn of the medial meniscus "
+                    "extending to the articular margin.\n"
+                    "2. Minor associated joint fluid. No cruciate ligament disruption identified."
+                ),
+                "recommendations": (
+                    "Consider arthroscopy review if mechanical locking or catching is present; "
+                    "otherwise anti-inflammatory management and physiotherapy."
+                ),
+                "patient_summary": (
+                    "The scan suggests a tear in the meniscus, the cartilage cushion on the inner "
+                    "side of the knee. There is a small amount of fluid in the joint. Rest, "
+                    "physiotherapy, or review by a knee specialist is recommended."
+                ),
+            }
+        return {
+            "impression": (
+                "1. No significant abnormality identified on this multi-planar knee MRI.\n"
+                "2. Cruciate and collateral ligaments and both menisci appear intact, with no "
+                "joint effusion identified."
+            ),
+            "recommendations": "Routine follow-up; symptom-based conservative management.",
+            "patient_summary": (
+                "The knee scan appears normal. The major ligaments and cartilage cushions look "
+                "intact, with no sign of a tear or joint injury."
+            ),
+        }
 
     def generate_report(self, diagnosis_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Synthesizes a structured radiology report using Gemini 1.5 Pro.
-        Returns:
-          - study_info
-          - clinical_findings
-          - impression
-          - recommendations
-          - patient_summary (simplified non-technical breakdown for patient portal)
-        """
-        primary_diag = diagnosis_data.get("primary_diagnosis", "Normal Joint")
-        pathologies = diagnosis_data.get("pathologies", {})
-        raw_patient_info = diagnosis_data.get("patient_info")
-        patient_info = raw_patient_info if isinstance(raw_patient_info, dict) else {
-            "age": 30,
-            "gender": "Patient",
-            "mri_type": "Knee Volumetric MRI (Sagittal T2 FS / Coronal PD)",
-            "study_description": "Right Knee MRI Evaluation"
-        }
+        """Returns study info, findings, impression, recommendations and patient summary."""
+        primary_diag = diagnosis_data.get("primary_diagnosis", "Unremarkable Joint")
+        pathologies: Dict[str, float] = diagnosis_data.get("pathologies") or {}
 
-        # High probability targets
-        high_prob_targets = [f"{k}: {int(v * 100)}%" for k, v in pathologies.items() if v >= 0.35 and k != "Normal Joint"]
-        high_prob_str = ", ".join(high_prob_targets) if high_prob_targets else "No high-probability acute tears detected."
+        raw_info = diagnosis_data.get("patient_info")
+        info = raw_info if isinstance(raw_info, dict) else {}
+        age = info.get("age", "—")
+        gender = info.get("gender", "Not recorded")
+        technique = info.get("mri_type", "Knee MRI, multi-planar")
+        study = info.get("study_description", "Knee MRI")
 
-        # Draft Clinical Impression based on Gemini Reasoning
-        if "ACL Tear" in primary_diag:
-            impression = (
-                "1. Complete disruption of the Anterior Cruciate Ligament (ACL) mid-substance. "
-                "Recommend orthopedic consultation for stability assessment.\n"
-                "2. Associated joint effusion and lateral compartment bone marrow edema consistent with acute pivot-shift trauma."
-            )
-            patient_summary = (
-                "The MRI scan shows a tear in the ACL (Anterior Cruciate Ligament), which is the main stabilizing ligament inside your knee joint. "
-                "There is also swelling and mild bruising inside the joint bone. An orthopedic specialist consultation is recommended."
-            )
-            recommendations = "Surgical consultation for reconstruction consideration, knee bracing, physical therapy, and follow-up clinical stability tests (Lachman & Pivot Shift)."
-        elif "Meniscus Tear" in primary_diag:
-            impression = (
-                "1. High-grade tear involving the posterior horn of the medial meniscus with articular margin extension.\n"
-                "2. Mild secondary joint fluid accumulation without major cruciate ligament disruption."
-            )
-            patient_summary = (
-                "The scan shows a tear in the medial meniscus (the shock-absorbing cartilage cushion on the inner side of your knee). "
-                "There is some mild fluid buildup. Rest, physical therapy, or targeted evaluation by a knee specialist is recommended."
-            )
-            recommendations = "Knee arthroscopy consultation if mechanical locking or persistent catching is present; non-steroidal anti-inflammatory management & physical therapy."
+        reported = {k: v for k, v in pathologies.items() if v >= 0.35}
+        probability_str = (
+            ", ".join(f"{k} {int(v * 100)}%" for k, v in sorted(reported.items(), key=lambda kv: -kv[1]))
+            or "no target above the 35% reporting threshold"
+        )
+
+        narrative = self._call_gemini({
+            "study": study,
+            "technique": technique,
+            "age": age,
+            "gender": gender,
+            "primary": primary_diag,
+            "probabilities": probability_str,
+        })
+        llm_generated = narrative is not None
+        if narrative is None:
+            narrative = self._template_narrative(primary_diag)
+
+        if llm_generated:
+            engine = f"Vertex AI {self.model_name}"
+        elif self.init_error:
+            engine = f"Deterministic template (Vertex AI unavailable: {self.init_error})"
         else:
-            impression = (
-                "1. Unremarkable multi-planar volumetric MRI examination of the knee.\n"
-                "2. Cruciate ligaments (ACL/PCL), collateral ligaments (MCL/LCL), and bilateral menisci are intact without tear or fluid extravasation."
-            )
-            patient_summary = (
-                "Your knee MRI scan looks healthy and clear! All major ligaments and cartilage cushions are intact with no sign of tear or joint injury."
-            )
-            recommendations = "Routine follow-up; conservative symptom-based management."
+            engine = "Deterministic template (Vertex AI call failed)"
 
-        report = {
+        def pct(label: str, default: float) -> str:
+            return f"{int(pathologies.get(label, default) * 100)}%"
+
+        return {
             "status": "success",
-            "engine": "Vertex AI Gemini 1.5 Pro (GCP Cloud Run SDK)",
+            "engine": engine,
+            "llm_generated": llm_generated,
             "study_info": {
-                "patient_age": patient_info.get("age", 30),
-                "patient_gender": patient_info.get("gender", "Unknown"),
-                "modality": "MRI Volumetric DICOM (2.5D CNN-BiGRU Feature Map)",
-                "study_description": patient_info.get("study_description", "Knee Diagnostic MRI"),
-                "primary_diagnosis": primary_diag
+                "patient_age": age,
+                "patient_gender": gender,
+                "modality": technique,
+                "study_description": study,
+                "primary_diagnosis": primary_diag,
             },
             "clinical_findings": {
-                "anterior_cruciate_ligament": f"ACL status evaluated. Probability of disruption: {int(pathologies.get('ACL Tear', 0.02) * 100)}%.",
-                "medial_meniscus": f"Medial Meniscus status. Probability of tear: {int(pathologies.get('Medial Meniscus Tear', 0.04) * 100)}%.",
-                "lateral_meniscus": f"Lateral Meniscus status. Probability of tear: {int(pathologies.get('Lateral Meniscus Tear', 0.03) * 100)}%.",
-                "joint_effusion": f"Joint space fluid volume index: {int(pathologies.get('Joint Effusion', 0.05) * 100)}%.",
-                "bone_marrow_edema": f"Subchondral bone edema probability: {int(pathologies.get('Bone Marrow Edema', 0.03) * 100)}%."
+                "anterior_cruciate_ligament": f"Model probability of disruption: {pct('ACL Tear', 0.02)}.",
+                "medial_meniscus": f"Model probability of tear: {pct('Medial Meniscus Tear', 0.04)}.",
+                "lateral_meniscus": f"Model probability of tear: {pct('Lateral Meniscus Tear', 0.03)}.",
+                "collateral_ligaments": f"MCL model probability: {pct('MCL Injury', 0.02)}.",
+                "joint_effusion": f"Effusion model probability: {pct('Joint Effusion', 0.05)}.",
+                "bone_marrow_signal": f"Bone contusion model probability: {pct('Bone Contusion', 0.03)}.",
             },
-            "impression": impression,
-            "recommendations": recommendations,
-            "patient_summary": patient_summary,
-            "dictated_by": "RadScan AI Autonomously Generated Draft (Reviewed by Vertex AI Gemini 1.5 Pro)"
+            "impression": narrative["impression"],
+            "recommendations": narrative["recommendations"],
+            "patient_summary": narrative["patient_summary"],
+            "attestation_status": "Preliminary AI-assisted draft. Not attested by a radiologist.",
         }
 
-        return report
 
 gemini_report_generator = GeminiReportGenerator()

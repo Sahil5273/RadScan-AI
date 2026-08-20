@@ -16,6 +16,11 @@ dist/
 .env.local
 *.env
 
+# Model weights
+backend/models/*.pth
+*.pth
+*.zip
+
 # IDE / OS
 .vscode/
 .idea/

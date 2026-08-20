@@ -5,7 +5,7 @@ import { Check, Copy, Download, FileText, RefreshCw, ShieldAlert, User } from 'l
 
 interface ReportData {
   study_info: {
-    patient_age: number;
+    patient_age: number | string;
     patient_gender: string;
     modality: string;
     study_description: string;
@@ -15,6 +15,8 @@ interface ReportData {
   impression: string;
   recommendations: string;
   patient_summary: string;
+  engine?: string;
+  llm_generated?: boolean;
 }
 
 interface ReportGeneratorProps {
@@ -135,19 +137,19 @@ export default function ReportGenerator({
     pdf.rect(margin, y, contentWidth, 20, 'FD');
     pdf.setFontSize(8);
     pdf.setTextColor(102, 112, 133);
-    pdf.text('PATIENT', margin + 4, y + 6);
-    pdf.text('AGE / SEX', margin + 60, y + 6);
-    pdf.text('MODALITY', margin + 100, y + 6);
+    pdf.text('AGE / SEX', margin + 4, y + 6);
+    pdf.text('MODALITY', margin + 50, y + 6);
+    pdf.text('STUDY DATA', margin + 96, y + 6);
     pdf.setFontSize(9.5);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(16, 24, 40);
-    pdf.text('ANONYMISED, PATIENT', margin + 4, y + 13);
     pdf.text(
       `${report.study_info.patient_age} / ${report.study_info.patient_gender}`,
-      margin + 60,
+      margin + 4,
       y + 13,
     );
-    pdf.text('MRI', margin + 100, y + 13);
+    pdf.text('MRI', margin + 50, y + 13);
+    pdf.text('De-identified', margin + 96, y + 13);
     y += 28;
 
     addSection('Examination', report.study_info.study_description);
@@ -227,10 +229,18 @@ export default function ReportGenerator({
   return (
     <section className="panel">
       <div className="panel-header flex-wrap">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <FileText className="h-4 w-4 text-clinical-600" />
           <h2 className="panel-title">Structured Report</h2>
           <span className="chip chip-moderate">Preliminary draft</span>
+          {report?.engine && (
+            <span
+              className={`chip ${report.llm_generated ? 'chip-info' : 'chip-neutral'}`}
+              title={report.engine}
+            >
+              {report.llm_generated ? 'Gemini-drafted' : 'Template fallback'}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
