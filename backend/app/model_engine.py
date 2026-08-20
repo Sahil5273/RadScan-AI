@@ -8,6 +8,7 @@ Model 3: Phase 3 — Multimodal Text-Vision Oracle (ACL Gold AUC: 0.944 | 10% Im
 """
 import math
 import numpy as np
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 from app.sample_data import get_sample_by_id
 
@@ -365,7 +366,7 @@ class DiagnosticModelEngine:
                 "age": None,
                 "gender": "Not recorded",
                 "mri_type": "Custom DICOM/Image Upload",
-                "acquisition_date": "2026-08-20",
+                "acquisition_date": datetime.now().strftime("%Y-%m-%d"),
                 "study_description": f"Custom DICOM Study ({filename})"
             },
             "filename": filename,
