@@ -40,13 +40,13 @@ interface ModelMeta {
 const DEFAULT_MODELS: ModelMeta[] = [
   {
     id: 'phase1-sagittal-resnet18',
-    name: 'Phase 4: 3-Plane Multi-Planar Fusion (0.802 LB)',
-    short_name: 'Phase 4 (0.802 LB)',
+    name: 'Phase 13: 3-Plane Multi-Planar Fusion (0.802 LB)',
+    short_name: 'Phase 13 (0.802 LB)',
     architecture: '3-Plane Concatenation (Sag+Cor+Ax) + BiGRU (0.802 LB)',
     latency_ms: 18,
     gpu_memory: '2.2 GB',
     training_dataset: 'RSNA Knee MRI Dataset (224x224x24 Slices)',
-    best_for: 'Fast unread DICOM triage for ACL tears & meniscus lesions (0.802 LB)',
+    best_for: 'Single-model unread DICOM triage for ACL tears & meniscus lesions (0.802 LB)',
     overall_auc: 0.802,
     kaggle_score: '0.802 LB',
     mode_type: 'Multi-Planar Vision Triage',
@@ -75,9 +75,9 @@ const DEFAULT_MODELS: ModelMeta[] = [
   },
   {
     id: 'phase4-3plane-resnet18',
-    name: 'Phase 5: Advanced 3D SwinUNETR + BiGRU Ensemble (0.809 LB)',
-    short_name: 'Phase 5 (0.809 LB Champion)',
-    architecture: '3D SwinUNETR + Multi-Head Self-Attention Ensemble (0.809 LB)',
+    name: 'Phase 13 + 15: Ensemble Blend (0.809 LB Champion)',
+    short_name: 'Phase 13 + 15 Ensemble (0.809 LB)',
+    architecture: '0.60 x Phase 13 + 0.40 x Phase 15 Label Rescue Ensemble (0.809 LB)',
     latency_ms: 35,
     gpu_memory: '3.8 GB',
     training_dataset: 'RSNA Knee MRI Dataset (Extended Multi-Planar Volumetric)',
@@ -87,7 +87,7 @@ const DEFAULT_MODELS: ModelMeta[] = [
     mode_type: 'Top Vision Ensemble Champion',
     pros: [
       'Top-ranking 0.809 Kaggle Leaderboard score across all 12 target pathologies',
-      'Advanced 3D SwinUNETR attention backbone for full volumetric voxel modeling',
+      'Weighted 0.60 Phase 13 + 0.40 Phase 15 ensemble blending',
       'Superior joint space, cartilage, and multi-ligament injury detection',
     ],
     cons: [
