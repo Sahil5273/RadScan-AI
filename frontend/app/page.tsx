@@ -27,11 +27,12 @@ const ModelComparisonView = dynamic(() => import('@/components/ModelComparisonVi
   loading: () => panelFallback,
 });
 
-const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://radscan-ai-backend-388740016983.us-central1.run.app';
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
 export default function Home() {
   const [activeSampleId, setActiveSampleId] = useState<string>('sample-acl-tear');
   const [customPreviewUrl, setCustomPreviewUrl] = useState<string | null>(null);
+  const [lastUploadedFile, setLastUploadedFile] = useState<File | null>(null);
   const [predictionData, setPredictionData] = useState<any>(null);
   const [reportData, setReportData] = useState<any>(null);
   const [isLoadingPredict, setIsLoadingPredict] = useState<boolean>(false);
@@ -44,15 +45,22 @@ export default function Home() {
   const [selectedModel, setSelectedModel] = useState<string>('phase1-sagittal-resnet18');
 
   // Fetch prediction data when sample or model changes
-  const fetchPrediction = async (sampleId: string, modelId: string = selectedModel) => {
+  const fetchPrediction = async (sampleId: string, modelId: string = selectedModel, customFile?: File | null) => {
     setIsLoadingPredict(true);
+    const fileToUse = customFile !== undefined ? customFile : lastUploadedFile;
     if (sampleId !== 'custom') {
       setCustomPreviewUrl(null);
+      setLastUploadedFile(null);
     }
     try {
       const formData = new FormData();
-      formData.append('sample_id', sampleId);
       formData.append('model_id', modelId);
+
+      if (sampleId === 'custom' && fileToUse) {
+        formData.append('file', fileToUse);
+      } else {
+        formData.append('sample_id', sampleId === 'custom' ? 'sample-acl-tear' : sampleId);
+      }
 
       const res = await fetch(`${API_BASE}/api/v1/predict`, {
         method: 'POST',
@@ -76,8 +84,8 @@ export default function Home() {
 
   // Upload custom file
   const handleUploadCustom = async (file: File) => {
-    setIsLoadingPredict(true);
     setActiveSampleId('custom');
+    setLastUploadedFile(file);
     
     // Create local object URL for instant visual preview
     if (file.type.startsWith('image/') || file.name.endsWith('.dcm') || file.name.endsWith('.png') || file.name.endsWith('.jpg') || file.name.endsWith('.jpeg')) {
@@ -85,31 +93,10 @@ export default function Home() {
       setCustomPreviewUrl(objectUrl);
     }
 
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('model_id', selectedModel);
-
-      const res = await fetch(`${API_BASE}/api/v1/predict`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to upload custom file');
-      }
-
-      const data = await res.json();
-      setPredictionData(data);
-      fetchReport(data);
-    } catch (err) {
-      console.error('Error uploading custom file:', err);
-    } finally {
-      setIsLoadingPredict(false);
-    }
+    fetchPrediction('custom', selectedModel, file);
   };
 
-  // Fetch Gemini report
+  // Fetch report
   const fetchReport = async (predictPayload?: any) => {
     const payload = predictPayload || predictionData;
     if (!payload) return;
@@ -127,8 +114,14 @@ export default function Home() {
         }),
       });
 
+      if (!res.ok) {
+        throw new Error('Report API call failed');
+      }
+
       const data = await res.json();
-      setReportData(data);
+      if (data && data.status === 'success') {
+        setReportData(data);
+      }
     } catch (err) {
       console.error('Error generating report:', err);
     } finally {

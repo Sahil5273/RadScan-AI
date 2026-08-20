@@ -360,6 +360,14 @@ class DiagnosticModelEngine:
             "model_version": f"{model_meta['short_name']} (Mode: {model_meta['mode_type']})",
             "latency_ms": model_meta["latency_ms"],
             "device": self.device,
+            "sample_id": "custom",
+            "patient_info": {
+                "age": None,
+                "gender": "Not recorded",
+                "mri_type": "Custom DICOM/Image Upload",
+                "acquisition_date": "2026-08-20",
+                "study_description": f"Custom DICOM Study ({filename})"
+            },
             "filename": filename,
             "file_size_kb": round(len(file_bytes) / 1024.0, 2),
             "slice_count": 24,
