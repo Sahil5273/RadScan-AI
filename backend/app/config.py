@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     # Vertex AI initialization fails and the report falls back to a template.
     GCP_PROJECT_ID: str = os.getenv("GCP_PROJECT_ID", "")
     GCP_LOCATION: str = os.getenv("GCP_LOCATION", "us-central1")
-    VERTEX_AI_MODEL: str = os.getenv("VERTEX_AI_MODEL", "gemini-2.5-flash")
+    VERTEX_AI_MODEL: str = os.getenv("VERTEX_AI_MODEL", "gemini-3.5-flash")
     ENABLE_VERTEX_AI: bool = os.getenv("ENABLE_VERTEX_AI", "false").lower() == "true"
 
     # Inference runtime. The current engine is CPU-only NumPy/Pillow; there is no

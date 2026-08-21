@@ -1,7 +1,7 @@
 # 🩺 RadScan AI: Multimodal Radiology Triage & Autonomous Agent Workstation
 
 [![Google Cloud Platform](https://img.shields.io/badge/GCP-Cloud%20Run%20%7C%20Vertex%20AI-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white)](https://cloud.google.com)
-[![Gemini 2.5 Flash](https://img.shields.io/badge/LLM-Gemini%202.5%20Flash-8E44AD?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
+[![Gemini 3.5 Flash](https://img.shields.io/badge/LLM-Gemini%203.5%20Flash-8E44AD?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 [![PyTorch Ensemble](https://img.shields.io/badge/Vision%20Engine-0.809%20LB%20Ensemble-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org)
 [![Next.js 14](https://img.shields.io/badge/Frontend-Next.js%2014-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -15,7 +15,7 @@
 
 Radiologists handle massive volumes of complex 3D DICOM MRI scans daily, spending 8 to 12 minutes per study manually scrolling through multi-planar slice series, dictating findings, and drafting patient reports. This creates severe clinical triage bottlenecks and diagnostic burnout.
 
-**RadScan AI** is an **autonomous MSK MRI decision-support copilot and diagnostic workstation** designed to streamline radiology triage. Powered by an ensemble of 3-plane PyTorch neural networks (**0.809 Leaderboard Champion Score**) and **Vertex AI Gemini 2.5 Flash**, RadScan AI asynchronously analyzes multi-planar MRI volumes across 12 pathology targets, generates real-time Grad-CAM visual heatmaps, and synthesizes structured radiology reports alongside plain-language patient portal summaries—reducing scan interpretation time by **~6 minutes per case**.
+**RadScan AI** is an **autonomous MSK MRI decision-support copilot and diagnostic workstation** designed to streamline radiology triage. Powered by an ensemble of 3-plane PyTorch neural networks (**0.809 Leaderboard Champion Score**) and **Vertex AI Gemini 3.5 Flash**, RadScan AI asynchronously analyzes multi-planar MRI volumes across 12 pathology targets, generates real-time Grad-CAM visual heatmaps, and synthesizes structured radiology reports alongside plain-language patient portal summaries—reducing scan interpretation time by **~6 minutes per case**.
 
 ---
 
@@ -36,7 +36,7 @@ Every requirement specified by the **All Things Agentic Hackathon** is fully sat
 
 | Requirement | Implementation in RadScan AI | Status |
 |---|---|---|
-| **Google AI Model** | **Vertex AI Gemini 2.5 Flash** (`gemini-2.5-flash`) via `google-genai` SDK | ✅ Verified |
+| **Google AI Model** | **Vertex AI Gemini 3.5 Flash** (`gemini-3.5-flash`) via `google-genai` SDK | ✅ Verified |
 | **Google Agent Framework** | **Google GenAI SDK** (`google.genai`) & Antigravity Agent Framework | ✅ Verified |
 | **Google Cloud Infrastructure** | **GCP Cloud Run** (`radscan-ai-backend` & `radscan-ai-frontend`), GCP Artifact Registry, Vertex AI (`aiplatform.googleapis.com`) | ✅ Deployed & Live |
 | **Reproducibility** | Full local spin-up steps + Cloud Run container deployment scripts | ✅ Provided |
@@ -184,7 +184,7 @@ gcloud run deploy radscan-ai-backend \
   --allow-unauthenticated \
   --memory 2Gi \
   --cpu 2 \
-  --set-env-vars "GCP_PROJECT_ID=YOUR_GCP_PROJECT_ID,GCP_LOCATION=us-central1,VERTEX_AI_MODEL=gemini-2.5-flash,ENABLE_VERTEX_AI=true" \
+  --set-env-vars "GCP_PROJECT_ID=YOUR_GCP_PROJECT_ID,GCP_LOCATION=us-central1,VERTEX_AI_MODEL=gemini-3.5-flash,ENABLE_VERTEX_AI=true" \
   --quiet
 ```
 
