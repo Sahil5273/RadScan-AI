@@ -35,7 +35,7 @@ flowchart TD
         E[POST /api/v1/predict] --> F[2.5D Volumetric CNN-BiGRU Model]
         F --> G[Grad-CAM Heatmap Synthesizer]
         E --> H[POST /api/v1/report]
-        H --> I[Vertex AI Gemini 1.5 Pro SDK]
+        H --> I[Vertex AI Gemini 3.5 Flash SDK]
     end
 
     Frontend --> Backend
