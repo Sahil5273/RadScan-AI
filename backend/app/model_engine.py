@@ -14,7 +14,10 @@ from app.sample_data import get_sample_by_id
 
 import torch
 import torch.nn as nn
-from torchvision import models
+try:
+    from torchvision import models
+except ImportError:
+    models = None
 
 def canonicalize_laterality(vol: np.ndarray, plane: str, laterality: str) -> np.ndarray:
     """

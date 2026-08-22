@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PyTorch CPU wheel
-RUN pip install --no-cache-dir torch --extra-index-url https://download.pytorch.org/whl/cpu
+# Install PyTorch & torchvision CPU wheels
+RUN pip install --no-cache-dir torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Copy requirements and install
 COPY requirements.txt .
