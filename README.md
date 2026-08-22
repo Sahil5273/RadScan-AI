@@ -2,7 +2,7 @@
 
 [![Google Cloud Platform](https://img.shields.io/badge/GCP-Cloud%20Run%20%7C%20Vertex%20AI-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white)](https://cloud.google.com)
 [![Gemini 3.5 Flash](https://img.shields.io/badge/LLM-Gemini%203.5%20Flash-8E44AD?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
-[![PyTorch Ensemble](https://img.shields.io/badge/Vision%20Engine-0.809%20LB%20Ensemble-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org)
+[![PyTorch Engine](https://img.shields.io/badge/Vision%20Engine-0.860%20LB%20SOTA-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org)
 [![Next.js 14](https://img.shields.io/badge/Frontend-Next.js%2014-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 
@@ -15,13 +15,14 @@
 
 Radiologists handle massive volumes of complex 3D DICOM MRI scans daily, spending 8 to 12 minutes per study manually scrolling through multi-planar slice series, dictating findings, and drafting patient reports. This creates severe clinical triage bottlenecks and diagnostic burnout.
 
-**RadScan AI** is an **autonomous MSK MRI decision-support copilot and diagnostic workstation** designed to streamline radiology triage. Powered by an ensemble of 3-plane PyTorch neural networks (**0.809 Leaderboard Champion Score**) and **Vertex AI Gemini 3.5 Flash**, RadScan AI asynchronously analyzes multi-planar MRI volumes across 12 pathology targets, generates real-time Grad-CAM visual heatmaps, and synthesizes structured radiology reports alongside plain-language patient portal summaries—reducing scan interpretation time by **~6 minutes per case**.
+**RadScan AI** is an **autonomous MSK MRI decision-support copilot and diagnostic workstation** designed to streamline radiology triage. Powered by current competition SOTA 3-plane PyTorch neural networks (**0.860 Leaderboard SOTA Score**) and **Vertex AI Gemini 3.5 Flash**, RadScan AI asynchronously analyzes multi-planar MRI volumes across 12 pathology targets, generates real-time Grad-CAM visual heatmaps, and synthesizes structured radiology reports alongside plain-language patient portal summaries—reducing scan interpretation time by **~6 minutes per case**.
 
 ---
 
 ## 🚀 Key Features & Functionality
 
-* **🧠 0.809 LB Champion PyTorch Ensemble**: Combines Phase 13 ($0.60$ weight, 0.802 LB) and Phase 15 Label Rescue ($0.40$ weight) ResNet-18 + BiGRU architectures across Sagittal, Coronal, and Axial planes for multi-target joint triage.
+* **🧠 0.860 LB SOTA PyTorch Engine**: ACD-Net Phase 16.0 Seed 123 ResNet-18 + BiGRU architecture featuring a DICOM `ImageOrientationPatient` (IOP) Laterality Canonicalization Engine that normalizes Left vs Right knee slice ordering and column flips for mirror-symmetric feature alignment (**0.860 Public LB SOTA** / 0.8481 Val AUC).
+* **⚡ Phase 16.2 FiLM Multi-Sequence Conditioner**: Secondary multi-series model using Feature-wise Linear Modulation (FiLM) conditioning on plane ID and fluid-sensitivity/fat-suppression tags (**0.814 AUC**).
 * **🤖 Vertex AI Gemini 2.5 Flash Synthesis**: Uses the official `google-genai` SDK in native JSON mode (`response_mime_type="application/json"`) to draft clinical impressions, actionable recommendations, and jargon-free patient summaries.
 * **🔥 Grad-CAM Visual Heatmaps & PACS Workstation**: Interactive opacity slider overlaying localized anomaly heatmaps directly onto 2.5D MRI slices with 1-click slice navigation (Slices 1–24).
 * **⚡ 1-Click Judge Demonstration Suite**: Instant evaluation test cases (`Sample 1: ACL Tear`, `Sample 2: Meniscus Tear`, `Sample 3: Normal Knee`) plus drag-and-drop custom DICOM / image upload support.

@@ -67,13 +67,10 @@ export default function Header({
                 className="bg-transparent text-xs font-bold text-[var(--accent-deep)] outline-none cursor-pointer max-w-[200px] sm:max-w-none truncate"
               >
                 <option value="phase1-sagittal-resnet18">
-                  Phase 13: 3-Plane Fusion (0.802 LB)
+                  Phase 16.0: ACD-Net Seed 123 SOTA (0.860 LB)
                 </option>
                 <option value="phase4-3plane-resnet18">
-                  Phase 13 + 15: Ensemble Blend (0.809 LB Champion)
-                </option>
-                <option value="phase3-multimodal-oracle">
-                  Phase 3: Multimodal Oracle (0.852 AUC)
+                  Phase 16.2: ACD-Net FiLM Multi-Sequence (0.814 AUC)
                 </option>
               </select>
             </div>
@@ -156,7 +153,7 @@ export default function Header({
           </div>
 
           <div className="hidden items-center gap-2 text-xs text-[var(--muted)] lg:flex">
-            <span>Selected Engine: <strong className="text-[var(--accent-deep)] font-bold">{selectedModel === 'phase1-sagittal-resnet18' ? 'Phase 13 (0.802 LB)' : selectedModel === 'phase4-3plane-resnet18' ? 'Phase 13 + 15 Ensemble (0.809 LB)' : 'Phase 3 Multimodal (0.852 AUC)'}</strong></span>
+            <span>Selected Engine: <strong className="text-[var(--accent-deep)] font-bold">{selectedModel === 'phase1-sagittal-resnet18' ? 'Phase 16.0 Seed 123 (0.860 LB SOTA)' : 'Phase 16.2 FiLM (0.814 AUC)'}</strong></span>
           </div>
         </div>
       </nav>
